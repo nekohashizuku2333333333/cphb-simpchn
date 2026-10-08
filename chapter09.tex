@@ -1,0 +1,1128 @@
+\chapter{区间查询}
+
+\index{range query}
+\index{sum query}
+\index{minimum query}
+\index{maximum query}
+
+本章讨论能够高效处理区间查询的数据结构。\key{区间查询}要求根据数组的某个子数组计算一个值。典型的区间查询包括：
+\begin{itemize}
+\item $\texttt{sum}_q(a,b)$：计算区间 $[a,b]$ 内元素之和
+\item $\texttt{min}_q(a,b)$：求区间 $[a,b]$ 内的最小值
+\item $\texttt{max}_q(a,b)$：求区间 $[a,b]$ 内的最大值
+\end{itemize}
+
+例如，考虑下列数组中的区间 $[3,6]$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$8$};
+\node at (3.5,0.5) {$4$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$3$};
+\node at (7.5,0.5) {$4$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+此时 $\texttt{sum}_q(3,6)=14$，$\texttt{min}_q(3,6)=1$，$\texttt{max}_q(3,6)=6$。
+
+处理区间查询的一种简单方法是用循环遍历区间内的所有数组元素。例如，下列函数可用于处理数组上的区间和查询：
+
+\begin{lstlisting}
+int sum(int a, int b) {
+    int s = 0;
+    for (int i = a; i <= b; i++) {
+        s += array[i];
+    }
+    return s;
+}
+\end{lstlisting}
+
+该函数的时间复杂度为 $O(n)$，其中 $n$ 是数组大小。因此，使用该函数处理 $q$ 次查询需要 $O(nq)$ 时间。若 $n$ 和 $q$ 都很大，这种方法会很慢。好在还有效率高得多的区间查询处理方法。
+
+\section{静态数组查询}
+
+首先考虑数组是\emph{静态的}情形，即查询之间从不更新数组元素。此时，只需构造一个能够回答任意查询的静态数据结构。
+
+\subsubsection{区间和查询}
+
+\index{prefix sum array}
+
+构造\key{前缀和数组}即可轻松处理静态数组上的区间和查询。前缀和数组中每个元素等于原数组从开头到该位置的元素和，即位置 $k$ 的值为 $\texttt{sum}_q(0,k)$。前缀和数组可在 $O(n)$ 时间内构造。
+
+例如，考虑下列数组：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+%\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+相应的前缀和数组如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+%\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$8$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$22$};
+\node at (5.5,0.5) {$23$};
+\node at (6.5,0.5) {$27$};
+\node at (7.5,0.5) {$29$};
+
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+由于前缀和数组包含所有 $\texttt{sum}_q(0,k)$ 的值，可以按下式在 $O(1)$ 时间内计算任意 $\texttt{sum}_q(a,b)$：
+\[ \texttt{sum}_q(a,b) = \texttt{sum}_q(0,b) - \texttt{sum}_q(0,a-1)\]
+规定 $\texttt{sum}_q(0,-1)=0$ 后，上式在 $a=0$ 时也成立。
+
+例如，考虑区间 $[3,6]$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+此时 $\texttt{sum}_q(3,6)=8+6+1+4=19$。可以用前缀和数组中的两个值计算该和：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (3,1);
+\fill[color=lightgray] (6,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$8$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$22$};
+\node at (5.5,0.5) {$23$};
+\node at (6.5,0.5) {$27$};
+\node at (7.5,0.5) {$29$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+因此，$\texttt{sum}_q(3,6)=\texttt{sum}_q(0,6)-\texttt{sum}_q(0,2)=27-8=19$。
+
+这一思想还可推广到更高维。例如，可以构造二维前缀和数组，在 $O(1)$ 时间内计算任意矩形子数组的元素和。该数组中的每个和都对应一个从数组左上角开始的矩形子数组。
+
+\begin{samepage}
+下图说明了这一思想：
+\begin{center}
+\begin{tikzpicture}[scale=0.54]
+\draw[fill=lightgray] (3,2) rectangle (7,5);
+\draw (0,0) grid (10,7);
+\node[anchor=center] at (6.5, 2.5) {$A$};
+\node[anchor=center] at (2.5, 2.5) {$B$};
+\node[anchor=center] at (6.5, 5.5) {$C$};
+\node[anchor=center] at (2.5, 5.5) {$D$};
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+灰色子数组的元素和可用下式计算：
+\[S(A) - S(B) - S(C) + S(D),\]
+其中 $S(X)$ 表示从左上角到 $X$ 所在位置的矩形子数组元素和。
+
+\subsubsection{区间最小值查询}
+
+\index{sparse table}
+
+区间最小值查询比区间和查询更难处理。不过，有一种相当简单的方法，经过 $O(n\log n)$ 时间预处理后，即可在 $O(1)$ 时间内回答任意区间最小值查询\footnote{该技术见 \cite{ben00}，有时称为\key{稀疏表}方法。还有更复杂的技术 \cite{fis06} 能将预处理时间降到 $O(n)$，但算法竞赛中并不需要这些算法。}。区间最小值和最大值查询的处理方式相似，因此这里只讨论最小值查询。
+
+其思想是预先计算所有区间长度 $b-a+1$ 为 2 的幂的 $\textrm{min}_q(a,b)$。例如，对于数组
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+需要计算下列值：
+
+\begin{center}
+\begin{tabular}{ccc}
+
+\begin{tabular}{lll}
+$a$ & $b$ & $\texttt{min}_q(a,b)$ \\
+\hline
+0 & 0 & 1 \\
+1 & 1 & 3 \\
+2 & 2 & 4 \\
+3 & 3 & 8 \\
+4 & 4 & 6 \\
+5 & 5 & 1 \\
+6 & 6 & 4 \\
+7 & 7 & 2 \\
+\end{tabular}
+
+&
+
+\begin{tabular}{lll}
+$a$ & $b$ & $\texttt{min}_q(a,b)$ \\
+\hline
+0 & 1 & 1 \\
+1 & 2 & 3 \\
+2 & 3 & 4 \\
+3 & 4 & 6 \\
+4 & 5 & 1 \\
+5 & 6 & 1 \\
+6 & 7 & 2 \\
+\\
+\end{tabular}
+
+&
+
+\begin{tabular}{lll}
+$a$ & $b$ & $\texttt{min}_q(a,b)$ \\
+\hline
+0 & 3 & 1 \\
+1 & 4 & 3 \\
+2 & 5 & 1 \\
+3 & 6 & 1 \\
+4 & 7 & 1 \\
+0 & 7 & 1 \\
+\\
+\\
+\end{tabular}
+
+\end{tabular}
+\end{center}
+
+预计算值的数量为 $O(n\log n)$，因为作为 2 的幂的区间长度有 $O(\log n)$ 种。可以用下列递推式高效计算这些值：
+\[\texttt{min}_q(a,b) = \min(\texttt{min}_q(a,a+w-1),\texttt{min}_q(a+w,b)),\]
+其中 $b-a+1$ 是 2 的幂，且 $w=(b-a+1)/2$。计算所有这些值需要 $O(n\log n)$ 时间。
+
+此后，任意 $\texttt{min}_q(a,b)$ 都可取两个预计算值的最小值，在 $O(1)$ 时间内求出。令 $k$ 为不超过 $b-a+1$ 的最大 2 的幂，则可用下式计算 $\texttt{min}_q(a,b)$：
+\[\texttt{min}_q(a,b) = \min(\texttt{min}_q(a,a+k-1),\texttt{min}_q(b-k+1,b)).\]
+上式将区间 $[a,b]$ 表示为两个长度均为 $k$ 的区间 $[a,a+k-1]$ 与 $[b-k+1,b]$ 的并集。
+
+例如，考虑区间 $[1,6]$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (1,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+该区间长度为 6，不超过 6 的最大 2 的幂为 4。因此，区间 $[1,6]$ 是区间 $[1,4]$ 与 $[3,6]$ 的并集：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (1,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+由于 $\texttt{min}_q(1,4)=3$ 且 $\texttt{min}_q(3,6)=1$，可知 $\texttt{min}_q(1,6)=1$。
+
+\section{树状数组}
+
+\index{binary indexed tree}
+\index{Fenwick tree}
+
+\key{树状数组}，也称 \key{Fenwick 树}\footnote{树状数组由 P. M. Fenwick 于 1994 年提出 \cite{fen94}。}，可以看作前缀和数组的动态版本。它支持两种 $O(\log n)$ 操作：区间和查询与单点更新。
+
+树状数组的优势在于，可以在区间和查询之间高效更新数组元素。前缀和数组无法做到这一点，因为每次更新后都必须花费 $O(n)$ 时间重新构造整个前缀和数组。
+
+\subsubsection{结构}
+
+尽管名称中含有“树”，树状数组通常仍用数组表示。本节假设所有数组从 1 开始编号，因为这样实现更简单。
+
+令 $p(k)$ 表示能够整除 $k$ 的最大 2 的幂。将树状数组存入数组 \texttt{tree}，使得
+\[ \texttt{tree}[k] = \texttt{sum}_q(k-p(k)+1,k),\]
+即每个位置 $k$ 保存原数组中一个长度为 $p(k)$、以位置 $k$ 结尾的区间元素和。例如，因为 $p(6)=2$，$\texttt{tree}[6]$ 保存 $\texttt{sum}_q(5,6)$。
+
+例如，考虑下列数组：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$8$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+\end{tikzpicture}
+\end{center}
+
+对应的树状数组如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$29$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+\end{tikzpicture}
+\end{center}
+
+下图更清楚地展示了树状数组中的每个值如何对应原数组中的一个区间：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$29$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+
+\draw[->,thick] (0.5,-0.9) -- (0.5,-0.1);
+\draw[->,thick] (2.5,-0.9) -- (2.5,-0.1);
+\draw[->,thick] (4.5,-0.9) -- (4.5,-0.1);
+\draw[->,thick] (6.5,-0.9) -- (6.5,-0.1);
+\draw[->,thick] (1.5,-1.9) -- (1.5,-0.1);
+\draw[->,thick] (5.5,-1.9) -- (5.5,-0.1);
+\draw[->,thick] (3.5,-2.9) -- (3.5,-0.1);
+\draw[->,thick] (7.5,-3.9) -- (7.5,-0.1);
+
+\draw (0,-1) -- (1,-1) -- (1,-1.5) -- (0,-1.5) -- (0,-1);
+\draw (2,-1) -- (3,-1) -- (3,-1.5) -- (2,-1.5) -- (2,-1);
+\draw (4,-1) -- (5,-1) -- (5,-1.5) -- (4,-1.5) -- (4,-1);
+\draw (6,-1) -- (7,-1) -- (7,-1.5) -- (6,-1.5) -- (6,-1);
+\draw (0,-2) -- (2,-2) -- (2,-2.5) -- (0,-2.5) -- (0,-2);
+\draw (4,-2) -- (6,-2) -- (6,-2.5) -- (4,-2.5) -- (4,-2);
+\draw (0,-3) -- (4,-3) -- (4,-3.5) -- (0,-3.5) -- (0,-3);
+\draw (0,-4) -- (8,-4) -- (8,-4.5) -- (0,-4.5) -- (0,-4);
+\end{tikzpicture}
+\end{center}
+
+使用树状数组，可以在 $O(\log n)$ 时间内计算任意 $\texttt{sum}_q(1,k)$，因为区间 $[1,k]$ 总能划分成 $O(\log n)$ 个元素和已存入树中的区间。
+
+例如，区间 $[1,7]$ 由下列区间组成：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$29$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+
+\draw[->,thick] (0.5,-0.9) -- (0.5,-0.1);
+\draw[->,thick] (2.5,-0.9) -- (2.5,-0.1);
+\draw[->,thick] (4.5,-0.9) -- (4.5,-0.1);
+\draw[->,thick] (6.5,-0.9) -- (6.5,-0.1);
+\draw[->,thick] (1.5,-1.9) -- (1.5,-0.1);
+\draw[->,thick] (5.5,-1.9) -- (5.5,-0.1);
+\draw[->,thick] (3.5,-2.9) -- (3.5,-0.1);
+\draw[->,thick] (7.5,-3.9) -- (7.5,-0.1);
+
+\draw (0,-1) -- (1,-1) -- (1,-1.5) -- (0,-1.5) -- (0,-1);
+\draw (2,-1) -- (3,-1) -- (3,-1.5) -- (2,-1.5) -- (2,-1);
+\draw (4,-1) -- (5,-1) -- (5,-1.5) -- (4,-1.5) -- (4,-1);
+\draw[fill=lightgray] (6,-1) -- (7,-1) -- (7,-1.5) -- (6,-1.5) -- (6,-1);
+\draw (0,-2) -- (2,-2) -- (2,-2.5) -- (0,-2.5) -- (0,-2);
+\draw[fill=lightgray] (4,-2) -- (6,-2) -- (6,-2.5) -- (4,-2.5) -- (4,-2);
+\draw[fill=lightgray] (0,-3) -- (4,-3) -- (4,-3.5) -- (0,-3.5) -- (0,-3);
+\draw (0,-4) -- (8,-4) -- (8,-4.5) -- (0,-4.5) -- (0,-4);
+\end{tikzpicture}
+\end{center}
+因此，可以按如下方式计算对应的和：
+\[\texttt{sum}_q(1,7)=\texttt{sum}_q(1,4)+\texttt{sum}_q(5,6)+\texttt{sum}_q(7,7)=16+7+4=27\]
+
+要计算 $a>1$ 时的 $\texttt{sum}_q(a,b)$，可以使用与前缀和数组相同的技巧：
+\[ \texttt{sum}_q(a,b) = \texttt{sum}_q(1,b) - \texttt{sum}_q(1,a-1).\]
+由于 $\texttt{sum}_q(1,b)$ 和 $\texttt{sum}_q(1,a-1)$ 都可在 $O(\log n)$ 时间内计算，总时间复杂度为 $O(\log n)$。
+
+更新原数组中的一个元素后，还需要更新树状数组中的若干值。例如，若位置 3 的元素改变，下列区间的和也会改变：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$16$};
+\node at (4.5,0.5) {$6$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$29$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+
+\draw[->,thick] (0.5,-0.9) -- (0.5,-0.1);
+\draw[->,thick] (2.5,-0.9) -- (2.5,-0.1);
+\draw[->,thick] (4.5,-0.9) -- (4.5,-0.1);
+\draw[->,thick] (6.5,-0.9) -- (6.5,-0.1);
+\draw[->,thick] (1.5,-1.9) -- (1.5,-0.1);
+\draw[->,thick] (5.5,-1.9) -- (5.5,-0.1);
+\draw[->,thick] (3.5,-2.9) -- (3.5,-0.1);
+\draw[->,thick] (7.5,-3.9) -- (7.5,-0.1);
+
+\draw (0,-1) -- (1,-1) -- (1,-1.5) -- (0,-1.5) -- (0,-1);
+\draw[fill=lightgray] (2,-1) -- (3,-1) -- (3,-1.5) -- (2,-1.5) -- (2,-1);
+\draw (4,-1) -- (5,-1) -- (5,-1.5) -- (4,-1.5) -- (4,-1);
+\draw (6,-1) -- (7,-1) -- (7,-1.5) -- (6,-1.5) -- (6,-1);
+\draw (0,-2) -- (2,-2) -- (2,-2.5) -- (0,-2.5) -- (0,-2);
+\draw (4,-2) -- (6,-2) -- (6,-2.5) -- (4,-2.5) -- (4,-2);
+\draw[fill=lightgray] (0,-3) -- (4,-3) -- (4,-3.5) -- (0,-3.5) -- (0,-3);
+\draw[fill=lightgray] (0,-4) -- (8,-4) -- (8,-4.5) -- (0,-4.5) -- (0,-4);
+\end{tikzpicture}
+\end{center}
+
+由于每个数组元素属于树状数组中的 $O(\log n)$ 个区间，只需更新树中的 $O(\log n)$ 个值。
+
+\subsubsection{实现}
+
+树状数组的操作可以用位运算高效实现。关键在于可用下式计算任意 $p(k)$：
+\[p(k) = k \& -k.\]
+
+下列函数计算 $\texttt{sum}_q(1,k)$：
+\begin{lstlisting}
+int sum(int k) {
+    int s = 0;
+    while (k >= 1) {
+        s += tree[k];
+        k -= k&-k;
+    }
+    return s;
+}
+\end{lstlisting}
+
+下列函数将数组位置 $k$ 的元素增加 $x$（$x$ 可以为正或负）：
+\begin{lstlisting}
+void add(int k, int x) {
+    while (k <= n) {
+        tree[k] += x;
+        k += k&-k;
+    }
+}
+\end{lstlisting}
+
+两个函数的时间复杂度均为 $O(\log n)$，因为它们访问树状数组中的 $O(\log n)$ 个值，而每次移动到下一位置只需 $O(1)$ 时间。
+
+\section{线段树}
+
+\index{segment tree}
+
+\key{线段树}\footnote{本章自底向上的实现与 \cite{sta06} 相对应。20 世纪 70 年代末已有类似结构用于解决几何问题 \cite{ben80}。}是一种支持区间查询与数组元素更新的数据结构。线段树可以支持区间和、区间最小值、区间最大值等许多查询，并使查询和更新都在 $O(\log n)$ 时间内完成。
+
+与树状数组相比，线段树的优点是更加通用。树状数组主要支持区间和查询\footnote{事实上，使用\emph{两个}树状数组也可以支持最小值查询 \cite{dim15}，但这比使用线段树复杂。}，而线段树还支持其他查询。另一方面，线段树需要更多内存，实现也略为困难。
+
+\subsubsection{结构}
+
+线段树是一棵二叉树，最底层结点对应数组元素，其他结点则保存处理区间查询所需的信息。
+
+本节假设数组大小为 2 的幂，且使用从 0 开始的编号，因为这样构造线段树很方便。若数组大小不是 2 的幂，可以在末尾补充额外元素。
+
+首先讨论支持区间和查询的线段树。例如，考虑下列数组：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$5$};
+\node at (1.5,0.5) {$8$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$2$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$6$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+对应的线段树如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {2};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle] (a) at (1,2.5) {13};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,minimum size=22pt] (b) at (3,2.5) {9};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt] (c) at (5,2.5) {9};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {8};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle] (i) at (2,4.5) {22};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle] (j) at (6,4.5) {17};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle] (m) at (4,6.5) {39};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+\end{tikzpicture}
+\end{center}
+
+每个内部结点对应一个长度为 2 的幂的数组区间。在上图中，每个内部结点的值是对应区间的元素和，可以由左右子结点的值相加得到。
+
+任意区间 $[a,b]$ 都可以划分成 $O(\log n)$ 个值存储在线段树结点中的区间。例如，考虑区间 $[2,7]$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=gray!50] (2,0) rectangle (8,1);
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {2};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+这里 $\texttt{sum}_q(2,7)=6+3+2+7+2+6=26$。此时，下列两个树结点对应这个区间：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {2};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle] (a) at (1,2.5) {13};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,fill=gray!50,minimum size=22pt] (b) at (3,2.5) {9};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt] (c) at (5,2.5) {9};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {8};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle] (i) at (2,4.5) {22};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle,fill=gray!50] (j) at (6,4.5) {17};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle] (m) at (4,6.5) {39};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+\end{tikzpicture}
+\end{center}
+因此，也可以用 $9+17=26$ 计算该和。
+
+若尽量使用树中层次较高的结点计算区间和，则每层至多需要两个结点，因此结点总数为 $O(\log n)$。
+
+更新数组元素后，应更新所有依赖该元素的结点。沿被更新元素到根结点的路径向上遍历，并更新路径上的结点即可。
+
+下图展示数组元素 7 改变时哪些树结点需要更新：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=gray!50] (5,0) rectangle (6,1);
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {2};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle] (a) at (1,2.5) {13};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,minimum size=22pt] (b) at (3,2.5) {9};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt,fill=gray!50] (c) at (5,2.5) {9};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {8};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle] (i) at (2,4.5) {22};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle,fill=gray!50] (j) at (6,4.5) {17};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle,fill=gray!50] (m) at (4,6.5) {39};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+\end{tikzpicture}
+\end{center}
+
+从底层到根的路径总是包含 $O(\log n)$ 个结点，因此每次更新会改变树中的 $O(\log n)$ 个结点。
+
+\subsubsection{实现}
+
+用含 $2n$ 个元素的数组存储线段树，其中 $n$ 是原数组大小且为 2 的幂。树结点按从上到下的顺序存储：$\texttt{tree}[1]$ 是根结点，$\texttt{tree}[2]$ 和 $\texttt{tree}[3]$ 是它的子结点，依此类推。最后，$\texttt{tree}[n]$ 到 $\texttt{tree}[2n-1]$ 对应树最底层的原数组元素。
+
+例如，线段树
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {2};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle] (a) at (1,2.5) {13};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,minimum size=22pt] (b) at (3,2.5) {9};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt] (c) at (5,2.5) {9};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {8};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle] (i) at (2,4.5) {22};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle] (j) at (6,4.5) {17};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle] (m) at (4,6.5) {39};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+\end{tikzpicture}
+\end{center}
+按如下方式存储：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (15,1);
+
+\node at (0.5,0.5) {$39$};
+\node at (1.5,0.5) {$22$};
+\node at (2.5,0.5) {$17$};
+\node at (3.5,0.5) {$13$};
+\node at (4.5,0.5) {$9$};
+\node at (5.5,0.5) {$9$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$5$};
+\node at (8.5,0.5) {$8$};
+\node at (9.5,0.5) {$6$};
+\node at (10.5,0.5) {$3$};
+\node at (11.5,0.5) {$2$};
+\node at (12.5,0.5) {$7$};
+\node at (13.5,0.5) {$2$};
+\node at (14.5,0.5) {$6$};
+
+\footnotesize
+\node at (0.5,1.4) {$1$};
+\node at (1.5,1.4) {$2$};
+\node at (2.5,1.4) {$3$};
+\node at (3.5,1.4) {$4$};
+\node at (4.5,1.4) {$5$};
+\node at (5.5,1.4) {$6$};
+\node at (6.5,1.4) {$7$};
+\node at (7.5,1.4) {$8$};
+\node at (8.5,1.4) {$9$};
+\node at (9.5,1.4) {$10$};
+\node at (10.5,1.4) {$11$};
+\node at (11.5,1.4) {$12$};
+\node at (12.5,1.4) {$13$};
+\node at (13.5,1.4) {$14$};
+\node at (14.5,1.4) {$15$};
+\end{tikzpicture}
+\end{center}
+在这种表示中，$\texttt{tree}[k]$ 的父结点是 $\texttt{tree}[\lfloor k/2\rfloor]$，子结点是 $\texttt{tree}[2k]$ 和 $\texttt{tree}[2k+1]$。因此，左子结点的位置为偶数，右子结点的位置为奇数。
+
+下列函数计算 $\texttt{sum}_q(a,b)$：
+\begin{lstlisting}
+int sum(int a, int b) {
+    a += n; b += n;
+    int s = 0;
+    while (a <= b) {
+        if (a%2 == 1) s += tree[a++];
+        if (b%2 == 0) s += tree[b--];
+        a /= 2; b /= 2;
+    }
+    return s;
+}
+\end{lstlisting}
+函数维护一个初始为 $[a+n,b+n]$ 的区间。每一步将区间上移一层，在此之前把不属于上一层区间的结点值加入总和。
+
+下列函数将数组位置 $k$ 的元素增加 $x$：
+\begin{lstlisting}
+void add(int k, int x) {
+    k += n;
+    tree[k] += x;
+    for (k /= 2; k >= 1; k /= 2) {
+        tree[k] = tree[2*k]+tree[2*k+1];
+    }
+}
+\end{lstlisting}
+函数先更新树最底层的值，再更新所有相关内部结点，直到到达根结点。
+
+上述两个函数的时间复杂度均为 $O(\log n)$，因为含 $n$ 个元素的线段树有 $O(\log n)$ 层，而函数每步向上移动一层。
+
+\subsubsection{其他查询}
+
+线段树可以支持所有满足如下性质的区间查询：能把区间分为两部分，分别计算两部分的答案，再高效合并。此类查询包括最小值、最大值、最大公约数，以及按位与、或、异或。
+
+例如，下列线段树支持区间最小值查询：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {1};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle,minimum size=22pt] (a) at (1,2.5) {5};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,minimum size=22pt] (b) at (3,2.5) {3};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt] (c) at (5,2.5) {1};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {2};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle,minimum size=22pt] (i) at (2,4.5) {3};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle,minimum size=22pt] (j) at (6,4.5) {1};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle,minimum size=22pt] (m) at (4,6.5) {1};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+\end{tikzpicture}
+\end{center}
+
+此时，每个树结点保存对应数组区间内的最小值，根结点保存整个数组的最小值。操作实现与之前相同，只是把求和改为求最小值。
+
+线段树结构还允许用二分思想定位数组元素。例如，若线段树支持最小值查询，就可以在 $O(\log n)$ 时间内找到某个最小元素的位置。
+
+例如，在上面的树中，可以从根结点向下遍历一条路径，找到值为 1 的最小元素：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node[anchor=center] at (0.5, 0.5) {5};
+\node[anchor=center] at (1.5, 0.5) {8};
+\node[anchor=center] at (2.5, 0.5) {6};
+\node[anchor=center] at (3.5, 0.5) {3};
+\node[anchor=center] at (4.5, 0.5) {1};
+\node[anchor=center] at (5.5, 0.5) {7};
+\node[anchor=center] at (6.5, 0.5) {2};
+\node[anchor=center] at (7.5, 0.5) {6};
+
+\node[draw, circle,minimum size=22pt] (a) at (1,2.5) {5};
+\path[draw,thick,-] (a) -- (0.5,1);
+\path[draw,thick,-] (a) -- (1.5,1);
+\node[draw, circle,minimum size=22pt] (b) at (3,2.5) {3};
+\path[draw,thick,-] (b) -- (2.5,1);
+\path[draw,thick,-] (b) -- (3.5,1);
+\node[draw, circle,minimum size=22pt] (c) at (5,2.5) {1};
+\path[draw,thick,-] (c) -- (4.5,1);
+\path[draw,thick,-] (c) -- (5.5,1);
+\node[draw, circle,minimum size=22pt] (d) at (7,2.5) {2};
+\path[draw,thick,-] (d) -- (6.5,1);
+\path[draw,thick,-] (d) -- (7.5,1);
+
+\node[draw, circle,minimum size=22pt] (i) at (2,4.5) {3};
+\path[draw,thick,-] (i) -- (a);
+\path[draw,thick,-] (i) -- (b);
+\node[draw, circle,minimum size=22pt] (j) at (6,4.5) {1};
+\path[draw,thick,-] (j) -- (c);
+\path[draw,thick,-] (j) -- (d);
+
+\node[draw, circle,minimum size=22pt] (m) at (4,6.5) {1};
+\path[draw,thick,-] (m) -- (i);
+\path[draw,thick,-] (m) -- (j);
+
+\path[draw=red,thick,->,line width=2pt] (m) -- (j);
+\path[draw=red,thick,->,line width=2pt] (j) -- (c);
+\path[draw=red,thick,->,line width=2pt] (c) -- (4.5,1);
+\end{tikzpicture}
+\end{center}
+
+\section{其他技术}
+
+\subsubsection{坐标压缩}
+
+基于数组的数据结构有一个限制：元素必须用连续整数作为下标。当需要很大的下标时就会遇到困难。例如，若要使用下标 $10^9$，数组就需要包含 $10^9$ 个元素，内存开销过大。
+
+\index{index compression}
+
+不过，如果预先知道算法运行中需要的所有下标，通常可以用\key{坐标压缩}绕过这一限制：把原下标替换为 $1,2,3,\ldots$。
+
+其思想是用 $c(x)$ 替换每个原下标 $x$，其中 $c$ 是压缩下标的函数。要求下标的相对次序不变，即若 $a<b$，则 $c(a)<c(b)$。这样即使下标经过压缩，也能方便地执行查询。
+
+例如，若原下标为 $555$、$10^9$ 和 $8$，则新下标为：
+
+\[
+\begin{array}{lcl}
+c(8) & = & 1 \\
+c(555) & = & 2 \\
+c(10^9) & = & 3 \\
+\end{array}
+\]
+
+\subsubsection{区间更新}
+
+目前实现的数据结构支持区间查询与单点更新。现在考虑相反的情形：进行区间更新与单点查询。重点讨论将区间 $[a,b]$ 内所有元素增加 $x$ 的操作。
+
+\index{difference array}
+
+令人意外的是，本章介绍的数据结构也能用于这种情形。构造一个\key{差分数组}，其中各元素表示原数组中相邻元素的差。这样，原数组就是差分数组的前缀和数组。例如，考虑下列数组：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$3$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$1$};
+\node at (3.5,0.5) {$1$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$5$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$2$};
+
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+
+上述数组的差分数组如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$3$};
+\node at (1.5,0.5) {$0$};
+\node at (2.5,0.5) {$-2$};
+\node at (3.5,0.5) {$0$};
+\node at (4.5,0.5) {$0$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$-3$};
+\node at (7.5,0.5) {$0$};
+
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+
+例如，原数组位置 6 的值 2 对应差分数组中的和 $3-2+4-3=2$。
+
+差分数组的优势在于，只需修改其中两个元素，就能更新原数组的一个区间。例如，若要把原数组位置 1 到 4 的元素均增加 5，只需把差分数组位置 1 的值增加 5，并把位置 5 的值减少 5。结果如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$3$};
+\node at (1.5,0.5) {$5$};
+\node at (2.5,0.5) {$-2$};
+\node at (3.5,0.5) {$0$};
+\node at (4.5,0.5) {$0$};
+\node at (5.5,0.5) {$-1$};
+\node at (6.5,0.5) {$-3$};
+\node at (7.5,0.5) {$0$};
+
+\footnotesize
+\node at (0.5,1.4) {$0$};
+\node at (1.5,1.4) {$1$};
+\node at (2.5,1.4) {$2$};
+\node at (3.5,1.4) {$3$};
+\node at (4.5,1.4) {$4$};
+\node at (5.5,1.4) {$5$};
+\node at (6.5,1.4) {$6$};
+\node at (7.5,1.4) {$7$};
+\end{tikzpicture}
+\end{center}
+
+更一般地，要把区间 $[a,b]$ 内的元素增加 $x$，只需把位置 $a$ 的差分值增加 $x$，并把位置 $b+1$ 的差分值减少 $x$。这样只需进行单点更新与前缀和查询，因此可以使用树状数组或线段树。
+
+更困难的问题是同时支持区间查询与区间更新。第 28 章将会看到，这同样可以做到。

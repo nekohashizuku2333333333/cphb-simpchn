@@ -1,0 +1,615 @@
+\chapter{图论基础}
+
+许多编程问题都可以通过把问题建模成图论问题，再使用合适的图算法来解决。图的一个典型例子是由一个国家的城市和道路组成的网络。不过，有时图隐藏在问题之中，并不容易识别。
+
+本书这一部分讨论图算法，尤其关注算法竞赛中的重要主题。本章将介绍与图有关的概念，并研究在算法中表示图的不同方法。
+
+\section{图论术语}
+
+\index{graph}
+\index{node}
+\index{edge}
+
+一个\key{图}由\key{节点}和\key{边}组成。本书用变量 $n$ 表示图的节点数，用变量 $m$ 表示边数。节点用整数 $1,2,\ldots,n$ 编号。
+
+例如，下图包含 5 个节点和 7 条边：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (4) -- (5);
+\end{tikzpicture}
+\end{center}
+
+\section{图的表示}
+
+算法中有多种表示图的方法。数据结构的选择取决于图的规模以及算法处理图的方式。下面介绍三种常见表示。
+
+\subsubsection{邻接表表示}
+
+\index{adjacency list}
+
+在邻接表表示中，图中每个节点 $x$ 都对应一个\key{邻接表}，其中包含从 $x$ 出发有边相连的节点。邻接表是最常用的图表示方法，大多数算法都可以基于它高效实现。
+
+一种方便的存储方式是声明一个向量数组：
+\begin{lstlisting}
+vector<int> adj[N];
+\end{lstlisting}
+
+常量 $N$ 应足够大，以容纳所有邻接表。例如，图
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- (2);
+\path[draw,thick,->,>=latex] (2) -- (3);
+\path[draw,thick,->,>=latex] (2) -- (4);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (4) -- (1);
+\end{tikzpicture}
+\end{center}
+可以存储为：
+\begin{lstlisting}
+adj[1].push_back(2);
+adj[2].push_back(3);
+adj[2].push_back(4);
+adj[3].push_back(4);
+adj[4].push_back(1);
+\end{lstlisting}
+
+如果图是无向图，也可用类似方法存储，但每条边要按两个方向各加入一次。
+
+对于带权图，可将结构扩展为：
+
+\begin{lstlisting}
+vector<pair<int,int>> adj[N];
+\end{lstlisting}
+
+此时，每当存在一条从节点 $a$ 到节点 $b$、权值为 $w$ 的边时，节点 $a$ 的邻接表中就包含数对 $(b,w)$。例如，图
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- node[font=\small,label=above:5] {} (2);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=above:7] {} (3);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=left:6] {} (4);
+\path[draw,thick,->,>=latex] (3) -- node[font=\small,label=right:5] {} (4);
+\path[draw,thick,->,>=latex] (4) -- node[font=\small,label=left:2] {} (1);
+\end{tikzpicture}
+\end{center}
+可以存储为：
+\begin{lstlisting}
+adj[1].push_back({2,5});
+adj[2].push_back({3,7});
+adj[2].push_back({4,6});
+adj[3].push_back({4,5});
+adj[4].push_back({1,2});
+\end{lstlisting}
+
+邻接表的优点是可以高效找到经一条边能从给定节点到达的所有节点。例如，下面的循环遍历从节点 $s$ 出发能够直接到达的所有节点：
+
+\begin{lstlisting}
+for (auto u : adj[s]) {
+    // process node u
+}
+\end{lstlisting}
+
+\subsubsection{邻接矩阵表示}
+
+\index{adjacency matrix}
+
+\key{邻接矩阵}是一个二维数组，用来表示图中包含哪些边。利用邻接矩阵，可以高效检查两个节点之间是否存在边。矩阵可存储为数组
+\begin{lstlisting}
+int adj[N][N];
+\end{lstlisting}
+其中每个值 $\texttt{adj}[a][b]$ 表示图中是否含有从节点 $a$ 到节点 $b$ 的边。若该边存在，则 $\texttt{adj}[a][b]=1$；否则 $\texttt{adj}[a][b]=0$。例如，图
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- (2);
+\path[draw,thick,->,>=latex] (2) -- (3);
+\path[draw,thick,->,>=latex] (2) -- (4);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (4) -- (1);
+\end{tikzpicture}
+\end{center}
+可表示为：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (4,4);
+\node at (0.5,0.5) {1};
+\node at (1.5,0.5) {0};
+\node at (2.5,0.5) {0};
+\node at (3.5,0.5) {0};
+\node at (0.5,1.5) {0};
+\node at (1.5,1.5) {0};
+\node at (2.5,1.5) {0};
+\node at (3.5,1.5) {1};
+\node at (0.5,2.5) {0};
+\node at (1.5,2.5) {0};
+\node at (2.5,2.5) {1};
+\node at (3.5,2.5) {1};
+\node at (0.5,3.5) {0};
+\node at (1.5,3.5) {1};
+\node at (2.5,3.5) {0};
+\node at (3.5,3.5) {0};
+\node at (-0.5,0.5) {4};
+\node at (-0.5,1.5) {3};
+\node at (-0.5,2.5) {2};
+\node at (-0.5,3.5) {1};
+\node at (0.5,4.5) {1};
+\node at (1.5,4.5) {2};
+\node at (2.5,4.5) {3};
+\node at (3.5,4.5) {4};
+\end{tikzpicture}
+\end{center}
+
+如果图带权，则可扩展邻接矩阵表示，使存在边时矩阵中存放该边的权值。采用这种表示，图
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- node[font=\small,label=above:5] {} (2);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=above:7] {} (3);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=left:6] {} (4);
+\path[draw,thick,->,>=latex] (3) -- node[font=\small,label=right:5] {} (4);
+\path[draw,thick,->,>=latex] (4) -- node[font=\small,label=left:2] {} (1);
+\end{tikzpicture}
+\end{center}
+\begin{samepage}
+对应下列矩阵：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (4,4);
+\node at (0.5,0.5) {2};
+\node at (1.5,0.5) {0};
+\node at (2.5,0.5) {0};
+\node at (3.5,0.5) {0};
+\node at (0.5,1.5) {0};
+\node at (1.5,1.5) {0};
+\node at (2.5,1.5) {0};
+\node at (3.5,1.5) {5};
+\node at (0.5,2.5) {0};
+\node at (1.5,2.5) {0};
+\node at (2.5,2.5) {7};
+\node at (3.5,2.5) {6};
+\node at (0.5,3.5) {0};
+\node at (1.5,3.5) {5};
+\node at (2.5,3.5) {0};
+\node at (3.5,3.5) {0};
+\node at (-0.5,0.5) {4};
+\node at (-0.5,1.5) {3};
+\node at (-0.5,2.5) {2};
+\node at (-0.5,3.5) {1};
+\node at (0.5,4.5) {1};
+\node at (1.5,4.5) {2};
+\node at (2.5,4.5) {3};
+\node at (3.5,4.5) {4};
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+邻接矩阵表示的缺点是矩阵包含 $n^2$ 个元素，而其中大多数通常为零。因此，当图很大时不能采用这种表示。
+
+\subsubsection{边列表表示}
+
+\index{edge list}
+
+\key{边列表}按某种顺序包含图的所有边。当算法需要处理图中所有边，而不需要查找从某个给定节点出发的边时，这是一种方便的图表示方法。
+
+边列表可以存放在向量
+\begin{lstlisting}
+vector<pair<int,int>> edges;
+\end{lstlisting}
+中，其中每个数对 $(a,b)$ 表示存在一条从节点 $a$ 到节点 $b$ 的边。因此，图
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- (2);
+\path[draw,thick,->,>=latex] (2) -- (3);
+\path[draw,thick,->,>=latex] (2) -- (4);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (4) -- (1);
+\end{tikzpicture}
+\end{center}
+可以表示为：
+\begin{lstlisting}
+edges.push_back({1,2});
+edges.push_back({2,3});
+edges.push_back({2,4});
+edges.push_back({3,4});
+edges.push_back({4,1});
+\end{lstlisting}
+
+\noindent
+若图带权，可将结构扩展为：
+\begin{lstlisting}
+vector<tuple<int,int,int>> edges;
+\end{lstlisting}
+列表中的每个元素形如 $(a,b,w)$，表示存在一条从节点 $a$ 到节点 $b$、权值为 $w$ 的边。例如，图
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+
+\path[draw,thick,->,>=latex] (1) -- node[font=\small,label=above:5] {} (2);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=above:7] {} (3);
+\path[draw,thick,->,>=latex] (2) -- node[font=\small,label=left:6] {} (4);
+\path[draw,thick,->,>=latex] (3) -- node[font=\small,label=right:5] {} (4);
+\path[draw,thick,->,>=latex] (4) -- node[font=\small,label=left:2] {} (1);
+\end{tikzpicture}
+\end{center}
+\begin{samepage}
+可以表示为\footnote{在某些较旧的编译器中，必须用函数 \texttt{make\_tuple} 代替花括号（例如用 \texttt{make\_tuple(1,2,5)} 代替 \texttt{\{1,2,5\}}）。}：
+\begin{lstlisting}
+edges.push_back({1,2,5});
+edges.push_back({2,3,7});
+edges.push_back({2,4,6});
+edges.push_back({3,4,5});
+edges.push_back({4,1,2});
+\end{lstlisting}
+\end{samepage}
+
+\subsubsection{边的方向}
+
+\index{directed graph}
+
+如果每条边只能沿一个方向通过，则称图为\key{有向图}。例如，下图是有向图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+\path[draw,thick,->,>=latex] (1) -- (2);
+\path[draw,thick,->,>=latex] (2) -- (4);
+\path[draw,thick,->,>=latex] (2) -- (5);
+\path[draw,thick,->,>=latex] (4) -- (5);
+\path[draw,thick,->,>=latex] (4) -- (1);
+\path[draw,thick,->,>=latex] (3) -- (1);
+\end{tikzpicture}
+\end{center}
+
+上图包含从节点 $3$ 到节点 $5$ 的路径 $3 \rightarrow 1 \rightarrow 2 \rightarrow 5$，但不存在从节点 $5$ 到节点 $3$ 的路径。
+
+\subsubsection{边权}
+
+\index{weighted graph}
+
+在\key{带权图}中，每条边都被赋予一个\key{权值}。权值通常解释为边的长度。例如，下图是带权图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:5] {} (2);
+\path[draw,thick,-] (1) -- node[font=\small,label=left:1] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:7] {} (5);
+\path[draw,thick,-] (4) -- node[font=\small,label=below:3] {} (5);
+\end{tikzpicture}
+\end{center}
+
+带权图中一条路径的长度是路径上各边权值之和。例如，在上图中，路径 $1 \rightarrow 2 \rightarrow 5$ 的长度为 $12$，路径 $1 \rightarrow 3 \rightarrow 4 \rightarrow 5$ 的长度为 $11$。后者是从节点 $1$ 到节点 $5$ 的\key{最短}路径。
+
+\subsubsection{邻居与度数}
+
+\index{neighbor}
+\index{degree}
+
+若两个节点之间存在一条边，则称它们互为\key{邻居}或彼此\key{相邻}。节点的\key{度数}是其邻居的数量。例如，在下图中，节点 2 的邻居是 1、4 和 5，所以它的度数为 3。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (2) -- (5);
+%\path[draw,thick,-] (4) -- (5);
+\end{tikzpicture}
+\end{center}
+
+图中所有节点的度数之和总是 $2m$，其中 $m$ 是边数，因为每条边都会使恰好两个节点的度数各增加一。因此，度数之和必为偶数。
+
+\index{regular graph}
+\index{complete graph}
+
+如果每个节点的度数都等于同一个常数 $d$，则称图为\key{正则图}。如果每个节点的度数都是 $n-1$，即图中包含节点之间所有可能的边，则称图为\key{完全图}。
+
+\index{indegree}
+\index{outdegree}
+
+在有向图中，以某节点为终点的边数称为该节点的\key{入度}，以该节点为起点的边数称为它的\key{出度}。例如，在下图中，节点 2 的入度为 2，出度为 1。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+
+\path[draw,thick,->,>=latex] (1) -- (2);
+\path[draw,thick,->,>=latex] (1) -- (3);
+\path[draw,thick,->,>=latex] (1) -- (4);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (2) -- (4);
+\path[draw,thick,<-,>=latex] (2) -- (5);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{着色}
+
+\index{coloring}
+\index{bipartite graph}
+
+图的\key{着色}是给每个节点分配一种颜色，使任意两个相邻节点的颜色都不同。
+
+如果一个图能够用两种颜色完成着色，则称它为\key{二分图}。事实上，一个图是二分图，当且仅当它不含边数为奇数的环。例如，图
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$2$};
+\node[draw, circle] (2) at (4,3) {$3$};
+\node[draw, circle] (3) at (1,1) {$5$};
+\node[draw, circle] (4) at (4,1) {$6$};
+\node[draw, circle] (5) at (-2,1) {$4$};
+\node[draw, circle] (6) at (-2,3) {$1$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (5) -- (6);
+\end{tikzpicture}
+\end{center}
+是二分图，因为可以按如下方式着色：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle, fill=blue!40] (1) at (1,3) {$2$};
+\node[draw, circle, fill=red!40] (2) at (4,3) {$3$};
+\node[draw, circle, fill=red!40] (3) at (1,1) {$5$};
+\node[draw, circle, fill=blue!40] (4) at (4,1) {$6$};
+\node[draw, circle, fill=red!40] (5) at (-2,1) {$4$};
+\node[draw, circle, fill=blue!40] (6) at (-2,3) {$1$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (5) -- (6);
+\end{tikzpicture}
+\end{center}
+然而，图
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$2$};
+\node[draw, circle] (2) at (4,3) {$3$};
+\node[draw, circle] (3) at (1,1) {$5$};
+\node[draw, circle] (4) at (4,1) {$6$};
+\node[draw, circle] (5) at (-2,1) {$4$};
+\node[draw, circle] (6) at (-2,3) {$1$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (5) -- (6);
+\path[draw,thick,-] (1) -- (6);
+\end{tikzpicture}
+\end{center}
+不是二分图，因为下面这个由三个节点组成的环无法用两种颜色着色：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$2$};
+\node[draw, circle] (2) at (4,3) {$3$};
+\node[draw, circle] (3) at (1,1) {$5$};
+\node[draw, circle] (4) at (4,1) {$6$};
+\node[draw, circle] (5) at (-2,1) {$4$};
+\node[draw, circle] (6) at (-2,3) {$1$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (5) -- (6);
+\path[draw,thick,-] (1) -- (6);
+
+\path[draw=red,thick,-,line width=2pt] (1) -- (3);
+\path[draw=red,thick,-,line width=2pt] (3) -- (6);
+\path[draw=red,thick,-,line width=2pt] (6) -- (1);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{简单图}
+
+\index{simple graph}
+
+如果没有边的起点与终点是同一节点，并且任意两个节点之间都不存在重边，则称图为\key{简单图}。我们经常假定所讨论的图是简单图。例如，下图就\emph{不是}简单图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$2$};
+\node[draw, circle] (2) at (4,3) {$3$};
+\node[draw, circle] (3) at (1,1) {$5$};
+\node[draw, circle] (4) at (4,1) {$6$};
+\node[draw, circle] (5) at (-2,1) {$4$};
+\node[draw, circle] (6) at (-2,3) {$1$};
+
+\path[draw,thick,-] (1) edge [bend right=20] (2);
+\path[draw,thick,-] (2) edge [bend right=20] (1);
+%\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (5) -- (6);
+
+\tikzset{every loop/.style={in=135,out=190}}
+\path[draw,thick,-] (5) edge [loop left] (5);
+\end{tikzpicture}
+\end{center}
+
+\index{path}
+
+一条\key{路径}沿图中的边从节点 $a$ 通向节点 $b$。路径的\key{长度}是其中所含的边数。例如，上图包含一条从节点 1 到节点 5、长度为 3 的路径 $1 \rightarrow 3 \rightarrow 4 \rightarrow 5$：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (4) -- (5);
+
+\path[draw=red,thick,->,line width=2pt] (1) -- (3);
+\path[draw=red,thick,->,line width=2pt] (3) -- (4);
+\path[draw=red,thick,->,line width=2pt] (4) -- (5);
+\end{tikzpicture}
+\end{center}
+
+\index{cycle}
+
+如果路径的第一个节点和最后一个节点相同，则该路径是一个\key{环}。例如，上图包含环 $1 \rightarrow 3 \rightarrow 4 \rightarrow 1$。如果每个节点在一条路径中至多出现一次，则称该路径为\key{简单路径}。
+
+% 
+% \begin{itemize}
+% \item $1 \rightarrow 2 \rightarrow 5$ (length 2)
+% \item $1 \rightarrow 4 \rightarrow 5$ (length 2)
+% \item $1 \rightarrow 2 \rightarrow 4 \rightarrow 5$ (length 3)
+% \item $1 \rightarrow 3 \rightarrow 4 \rightarrow 5$ (length 3)
+% \item $1 \rightarrow 4 \rightarrow 2 \rightarrow 5$ (length 3)
+% \item $1 \rightarrow 3 \rightarrow 4 \rightarrow 2 \rightarrow 5$ (length 4)
+% \end{itemize}
+
+\subsubsection{连通性}
+
+\index{connected graph}
+
+如果任意两个节点之间都存在路径，则称图是\key{连通的}。例如，下图是连通图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (2) -- (3);
+\path[draw,thick,-] (3) -- (4);
+\path[draw,thick,-] (2) -- (4);
+\end{tikzpicture}
+\end{center}
+
+下图不是连通图，因为无法从节点 4 到达任何其他节点：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (2) -- (3);
+\end{tikzpicture}
+\end{center}
+
+\index{component}
+
+图中的各个连通部分称为它的\key{连通分量}。例如，下图包含三个连通分量：$\{1,\,2,\,3\}$、$\{4,\,5,\,6,\,7\}$ 和 $\{8\}$。
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+
+\node[draw, circle] (6) at (6,1) {$6$};
+\node[draw, circle] (7) at (9,1) {$7$};
+\node[draw, circle] (4) at (6,3) {$4$};
+\node[draw, circle] (5) at (9,3) {$5$};
+
+\node[draw, circle] (8) at (11,2) {$8$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (2) -- (3);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (4) -- (5);
+\path[draw,thick,-] (5) -- (7);
+\path[draw,thick,-] (6) -- (7);
+\path[draw,thick,-] (6) -- (4);
+\end{tikzpicture}
+\end{center}
+
+\index{tree}
+
+\key{树}是由 $n$ 个节点和 $n-1$ 条边组成的连通图。树中任意两个节点之间都有且仅有一条路径。例如，下图是一棵树：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,3) {$1$};
+\node[draw, circle] (2) at (4,3) {$2$};
+\node[draw, circle] (3) at (1,1) {$3$};
+\node[draw, circle] (4) at (4,1) {$4$};
+\node[draw, circle] (5) at (6,2) {$5$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+%\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (2) -- (4);
+%\path[draw,thick,-] (4) -- (5);
+\end{tikzpicture}
+\end{center}

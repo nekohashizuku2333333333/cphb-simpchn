@@ -1,0 +1,1119 @@
+\chapter{流与割}
+
+本章重点讨论以下两个问题：
+
+\begin{itemize}
+\item \key{求最大流}：从一个结点向另一个结点最多能输送多少流量？
+\item \key{求最小割}：使图中两个结点分离的最小权值边集是什么？
+\end{itemize}
+
+这两个问题的输入都是一个带权有向图，其中包含两个特殊结点：\emph{源点}没有入边，\emph{汇点}没有出边。
+
+我们将以下图为例，其中结点 1 是源点，结点 6 是汇点：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (7,2) {$6$};
+\node[draw, circle] (5) at (3,1) {$4$};
+\node[draw, circle] (6) at (5,1) {$5$};
+\path[draw,thick,->] (1) -- node[font=\small,label=5] {} (2);
+\path[draw,thick,->] (2) -- node[font=\small,label=6] {} (3);
+\path[draw,thick,->] (3) -- node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (1) -- node[font=\small,label=below:4] {} (5);
+\path[draw,thick,->] (5) -- node[font=\small,label=below:1] {} (6);
+\path[draw,thick,->] (6) -- node[font=\small,label=below:2] {} (4);
+\path[draw,thick,<-] (2) -- node[font=\small,label=left:3] {} (5);
+\path[draw,thick,->] (3) -- node[font=\small,label=left:8] {} (6);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{最大流}
+
+\index{flow}
+\index{maximum flow}
+
+在\key{最大流}问题中，任务是尽可能多地把流量从源点输送到汇点。每条边的权值表示容量，它限制了能够通过该边的流量。对于每个中间结点，流入量必须等于流出量。
+
+例如，示例图中的最大流量为 7。下图展示了一种流量分配方式：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (7,2) {$6$};
+\node[draw, circle] (5) at (3,1) {$4$};
+\node[draw, circle] (6) at (5,1) {$5$};
+\path[draw,thick,->] (1) -- node[font=\small,label=3/5] {} (2);
+\path[draw,thick,->] (2) -- node[font=\small,label=6/6] {} (3);
+\path[draw,thick,->] (3) -- node[font=\small,label=5/5] {} (4);
+\path[draw,thick,->] (1) -- node[font=\small,label=below:4/4] {} (5);
+\path[draw,thick,->] (5) -- node[font=\small,label=below:1/1] {} (6);
+\path[draw,thick,->] (6) -- node[font=\small,label=below:2/2] {} (4);
+\path[draw,thick,<-] (2) -- node[font=\small,label=left:3/3] {} (5);
+\path[draw,thick,->] (3) -- node[font=\small,label=left:1/8] {} (6);
+\end{tikzpicture}
+\end{center}
+
+记号 $v/k$ 表示一条容量为 $k$ 的边上通过了 $v$ 单位流量。该流的大小为 $7$，因为源点流出了 $3+4$ 单位流量，而汇点流入了 $5+2$ 单位流量。容易看出这已经是最大流，因为所有通向汇点的边的总容量就是 $7$。
+
+\subsubsection{最小割}
+
+\index{cut}
+\index{minimum cut}
+
+在\key{最小割}问题中，需要从图中删除一组边，使得删除后不存在从源点到汇点的路径，并且被删除边的总权值最小。
+
+示例图中的最小割大小为 7。只需删除边 $2 \rightarrow 3$ 和 $4 \rightarrow 5$：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (7,2) {$6$};
+\node[draw, circle] (5) at (3,1) {$4$};
+\node[draw, circle] (6) at (5,1) {$5$};
+\path[draw,thick,->] (1) -- node[font=\small,label=5] {} (2);
+\path[draw,thick,->] (2) -- node[font=\small,label=6] {} (3);
+\path[draw,thick,->] (3) -- node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (1) -- node[font=\small,label=below:4] {} (5);
+\path[draw,thick,->] (5) -- node[font=\small,label=below:1] {} (6);
+\path[draw,thick,->] (6) -- node[font=\small,label=below:2] {} (4);
+\path[draw,thick,<-] (2) -- node[font=\small,label=left:3] {} (5);
+\path[draw,thick,->] (3) -- node[font=\small,label=left:8] {} (6);
+
+\path[draw=red,thick,-,line width=2pt] (4-.3,3-.3) -- (4+.3,3+.3);
+\path[draw=red,thick,-,line width=2pt] (4-.3,3+.3) -- (4+.3,3-.3);
+\path[draw=red,thick,-,line width=2pt] (4-.3,1-.3) -- (4+.3,1+.3);
+\path[draw=red,thick,-,line width=2pt] (4-.3,1+.3) -- (4+.3,1-.3);
+\end{tikzpicture}
+\end{center}
+
+删除这些边之后，就不存在从源点到汇点的路径。该割的大小为 $7$，因为两条被删除边的权值分别为 $6$ 和 $1$。这个割是最小的，因为无法通过删除总权值小于 $7$ 的边使源点与汇点分离。
+\\\\
+在上述示例中，最大流与最小割的大小相同并非巧合。事实上，最大流与最小割的大小\emph{总是}相等，因此二者是同一问题的两个侧面。
+
+下面讨论 Ford--Fulkerson 算法，它可以求出图的最大流与最小割，也能帮助我们理解二者的大小\emph{为何}相等。
+
+\section{Ford--Fulkerson 算法}
+
+\index{Ford–Fulkerson algorithm}
+
+\key{Ford--Fulkerson 算法} \cite{for56} 用于求图中的最大流。算法从零流开始，每一步寻找一条从源点到汇点、能够增加流量的路径。当无法再增加流量时，就得到了最大流。
+
+算法使用一种特殊的图表示：每条原始边都有一条方向相反的反向边。每条边的权值表示还可以沿该边增加多少流量。算法开始时，每条原始边的权值等于其容量，而每条反向边的权值为零。
+
+\begin{samepage}
+示例图的新表示如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=5] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=6] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:0] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=4] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=1] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:0] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=2] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:0] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:8] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:0] {} (3);
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+\subsubsection{算法描述}
+
+Ford--Fulkerson 算法分若干轮执行。每一轮中，算法寻找一条从源点到汇点、且路径上每条边的权值均为正的路径。如果存在多条可选路径，可以任选其一。
+
+例如，假设选择下图所示的路径：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=5] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=6] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:0] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=4] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=1] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:0] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=2] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:0] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:8] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:0] {} (3);
+
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend left=10] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend left=10] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend left=10] (6);
+\path[draw=red,thick,->,line width=2pt] (6) edge [bend left=10] (4);
+\end{tikzpicture}
+\end{center}
+
+选定路径后，流量增加 $x$，其中 $x$ 是路径上最小的边权。同时，路径上每条正向边的权值减小 $x$，相应反向边的权值增加 $x$。
+
+上述路径上的边权依次为 5、6、8、2。最小边权为 2，因此流量增加 2，新图如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:2] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=4] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:2] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=4] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=1] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:0] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:2] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:0] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:6] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:2] {} (3);
+\end{tikzpicture}
+\end{center}
+
+其含义是：增加流量会减少以后还能通过这些边的流量。另一方面，如果后来发现改用另一种流量分配更有利，也可以沿图中的反向边撤销已经发送的流量。
+
+只要还存在一条由正权边组成的源点到汇点路径，算法就继续增加流量。在当前示例中，下一条路径可以是：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:2] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=4] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:2] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=5] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:0] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=4] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:0] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=1] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:0] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:2] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:0] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:6] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:2] {} (3);
+
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend left=10] (5);
+\path[draw=red,thick,->,line width=2pt] (5) edge [bend left=10] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend left=10] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend left=10] (4);
+\end{tikzpicture}
+\end{center}
+
+该路径上的最小边权为 3，因此它使流量增加 3；处理完这条路径后，总流量为 5。
+
+\begin{samepage}
+新图如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=3] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:2] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=1] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:5] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=2] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:3] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=1] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:3] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=1] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:0] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:2] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:0] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:3] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:6] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:2] {} (3);
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+还需再进行两轮才能达到最大流。例如，可以依次选择路径 $1 \rightarrow 2 \rightarrow 3 \rightarrow 6$ 和 $1 \rightarrow 4 \rightarrow 5 \rightarrow 3 \rightarrow 6$。两条路径都使流量增加 1，最终得到下图：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle] (1) at (1,1.3) {$1$};
+\node[draw, circle] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=2] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:3] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=0] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:6] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:5] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=0] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:4] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=0] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:1] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:2] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:0] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:3] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:7] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:1] {} (3);
+\end{tikzpicture}
+\end{center}
+
+此时已经无法继续增加流量，因为不存在一条由正权边组成的源点到汇点路径。因此算法终止，最大流为 7。
+
+\subsubsection{寻找路径}
+
+Ford--Fulkerson 算法并未规定应如何选择增大流量的路径。无论如何选择，算法最终都会终止并正确求出最大流；不过，算法效率取决于路径的选择方式。
+
+寻找路径的一种简单方法是深度优先搜索。它通常效果不错，但在最坏情况下，每条路径只能使流量增加 1，算法会很慢。可以使用以下技术避免这种情况：
+
+\index{Edmonds–Karp algorithm}
+
+\key{Edmonds--Karp 算法} \cite{edm72} 每次都选择边数尽可能少的路径。为此，寻找路径时使用广度优先搜索而不是深度优先搜索。可以证明，这能保证流量快速增加，算法的时间复杂度为 $O(m^2 n)$。
+
+\index{scaling algorithm}
+
+\key{容量缩放算法} \cite{ahu91} 使用深度优先搜索寻找每条边权都至少达到某个阈值的路径。初始阈值取一个较大的数，例如图中所有边权之和；每当找不到路径时，就把阈值除以 2。算法的时间复杂度为 $O(m^2 \log c)$，其中 $c$ 是初始阈值。
+
+实践中，容量缩放算法更容易实现，因为可以使用深度优先搜索寻找路径。这两种算法对算法竞赛中的典型问题都足够高效。
+
+\subsubsection{最小割}
+
+\index{minimum cut}
+
+Ford--Fulkerson 算法求出最大流的同时，也确定了一个最小割。令 $A$ 为从源点出发、沿正权边能够到达的结点集合。在示例图中，$A$ 包含结点 1、2、4：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9,label distance=-2mm]
+\node[draw, circle,fill=lightgray] (1) at (1,1.3) {$1$};
+\node[draw, circle,fill=lightgray] (2) at (3,2.6) {$2$};
+\node[draw, circle] (3) at (5,2.6) {$3$};
+\node[draw, circle] (4) at (7,1.3) {$6$};
+\node[draw, circle,fill=lightgray] (5) at (3,0) {$4$};
+\node[draw, circle] (6) at (5,0) {$5$};
+
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=2] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=below:3] {} (1);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=0] {} (3);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=below:6] {} (2);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:5] {} (3);
+\path[draw,thick,->] (1) edge [bend left=10] node[font=\small,label=0] {} (5);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=below:4] {} (1);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=0] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=below:1] {} (5);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=0] {} (4);
+\path[draw,thick,->] (4) edge [bend left=10] node[font=\small,label=below:2] {} (6);
+\path[draw,thick,->] (5) edge [bend left=10] node[font=\small,label=left:0] {} (2);
+\path[draw,thick,->] (2) edge [bend left=10] node[font=\small,label=right:3] {} (5);
+\path[draw,thick,->] (3) edge [bend left=10] node[font=\small,label=right:7] {} (6);
+\path[draw,thick,->] (6) edge [bend left=10] node[font=\small,label=left:1] {} (3);
+\end{tikzpicture}
+\end{center}
+
+最小割由原图中满足以下条件的边构成：起点属于 $A$，终点不属于 $A$，并且该边的容量在最大流中已被完全用尽。在上图中，这些边是 $2 \rightarrow 3$ 和 $4 \rightarrow 5$，对应的最小割大小为 $6+1=7$。
+
+为什么算法产生的流一定是最大流，而得到的割一定是最小割？原因在于，图中任意流的大小都不可能超过任意割的权值。因此，只要某个流与某个割大小相等，它们就分别是最大流和最小割。
+
+考虑图的任意一个割：源点属于集合 $A$，汇点属于集合 $B$，两个集合之间存在一些边：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\draw[dashed] (-2,0) circle (1.5);
+\draw[dashed] (2,0) circle (1.5);
+
+\node at (-2,-1) {$A$};
+\node at (2,-1) {$B$};
+
+\node[draw, circle] (1) at (-1,0.5) {};
+\node[draw, circle] (2) at (-1,0) {};
+\node[draw, circle] (3) at (-1,-0.5) {};
+\node[draw, circle] (4) at (1,0.5) {};
+\node[draw, circle] (5) at (1,0) {};
+\node[draw, circle] (6) at (1,-0.5) {};
+
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (5) -- (2);
+\path[draw,thick,->] (3) -- (6);
+
+\end{tikzpicture}
+\end{center}
+
+割的大小等于所有从 $A$ 指向 $B$ 的边的权值之和。它是图中流量的上界，因为流必须从 $A$ 流向 $B$。因此，最大流的大小小于或等于图中任意割的大小。
+
+另一方面，Ford--Fulkerson 算法产生的流，其大小与图中某个割的大小\emph{恰好}相等。因此，该流必为最大流，该割也必为最小割。
+
+\section{不相交路径}
+
+许多图论问题都可以归约为最大流问题。第一个例子如下：给定一个带有源点和汇点的有向图，任务是求从源点到汇点的不相交路径的最大条数。
+
+\subsubsection{边不相交路径}
+
+首先考虑从源点到汇点的\key{边不相交路径}的最大条数。也就是说，需要构造一组路径，使每条边最多只出现在其中一条路径中。
+
+例如，考虑下图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+\node[draw, circle] (5) at (5,1) {$5$};
+\node[draw, circle] (6) at (7,2) {$6$};
+\path[draw,thick,->] (1) -- (2);
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (2) -- (4);
+\path[draw,thick,->] (3) -- (2);
+\path[draw,thick,->] (3) -- (5);
+\path[draw,thick,->] (3) -- (6);
+\path[draw,thick,->] (4) -- (3);
+\path[draw,thick,->] (4) -- (5);
+\path[draw,thick,->] (5) -- (6);
+\end{tikzpicture}
+\end{center}
+
+该图中边不相交路径的最大条数为 2。可以选择路径 $1 \rightarrow 2 \rightarrow 4 \rightarrow 3 \rightarrow 6$ 和 $1 \rightarrow 4 \rightarrow 5 \rightarrow 6$，如下图所示：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+\node[draw, circle] (5) at (5,1) {$5$};
+\node[draw, circle] (6) at (7,2) {$6$};
+\path[draw,thick,->] (1) -- (2);
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (2) -- (4);
+\path[draw,thick,->] (3) -- (2);
+\path[draw,thick,->] (3) -- (5);
+\path[draw,thick,->] (3) -- (6);
+\path[draw,thick,->] (4) -- (3);
+\path[draw,thick,->] (4) -- (5);
+\path[draw,thick,->] (5) -- (6);
+
+\path[draw=green,thick,->,line width=2pt] (1) -- (2);
+\path[draw=green,thick,->,line width=2pt] (2) -- (4);
+\path[draw=green,thick,->,line width=2pt] (4) -- (3);
+\path[draw=green,thick,->,line width=2pt] (3) -- (6);
+
+\path[draw=blue,thick,->,line width=2pt] (1) -- (4);
+\path[draw=blue,thick,->,line width=2pt] (4) -- (5);
+\path[draw=blue,thick,->,line width=2pt] (5) -- (6);
+\end{tikzpicture}
+\end{center}
+
+如果把每条边的容量都设为 1，那么边不相交路径的最大条数就等于图的最大流。构造出最大流后，可以从源点到汇点贪心地沿有流量的边提取出这些边不相交路径。
+
+\subsubsection{点不相交路径}
+
+下面考虑另一个问题：求从源点到汇点的\key{点不相交路径}的最大条数。在这个问题中，除源点和汇点外，每个结点最多只能出现在一条路径中。点不相交路径的最大条数可能小于边不相交路径的最大条数。
+
+例如，在前一幅图中，点不相交路径的最大条数为 1：
+
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (1,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (3,1) {$4$};
+\node[draw, circle] (5) at (5,1) {$5$};
+\node[draw, circle] (6) at (7,2) {$6$};
+\path[draw,thick,->] (1) -- (2);
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (2) -- (4);
+\path[draw,thick,->] (3) -- (2);
+\path[draw,thick,->] (3) -- (5);
+\path[draw,thick,->] (3) -- (6);
+\path[draw,thick,->] (4) -- (3);
+\path[draw,thick,->] (4) -- (5);
+\path[draw,thick,->] (5) -- (6);
+
+\path[draw=green,thick,->,line width=2pt] (1) -- (2);
+\path[draw=green,thick,->,line width=2pt] (2) -- (4);
+\path[draw=green,thick,->,line width=2pt] (4) -- (3);
+\path[draw=green,thick,->,line width=2pt] (3) -- (6);
+\end{tikzpicture}
+\end{center}
+
+这个问题同样可以归约为最大流。由于每个结点最多只能出现在一条路径中，需要限制通过结点的流量。标准方法是把每个结点拆成两个结点：第一个结点连接原结点的所有入边，第二个结点连接原结点的所有出边，并在第一个结点到第二个结点之间添加一条容量为 1 的新边。
+
+在本例中，图变为：
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (1,2) {$1$};
+
+\node[draw, circle] (2a) at (3,3) {$2$};
+\node[draw, circle] (3a) at (6,3) {$3$};
+\node[draw, circle] (4a) at (3,1) {$4$};
+\node[draw, circle] (5a) at (6,1) {$5$};
+
+\node[draw, circle] (2b) at (4,3) {$2$};
+\node[draw, circle] (3b) at (7,3) {$3$};
+\node[draw, circle] (4b) at (4,1) {$4$};
+\node[draw, circle] (5b) at (7,1) {$5$};
+
+\node[draw, circle] (6) at (9,2) {$6$};
+
+\path[draw,thick,->] (2a) -- (2b);
+\path[draw,thick,->] (3a) -- (3b);
+\path[draw,thick,->] (4a) -- (4b);
+\path[draw,thick,->] (5a) -- (5b);
+
+\path[draw,thick,->] (1) -- (2a);
+\path[draw,thick,->] (1) -- (4a);
+\path[draw,thick,->] (2b) -- (4a);
+\path[draw,thick,->] (3b) edge [bend right=30] (2a);
+\path[draw,thick,->] (3b) -- (5a);
+\path[draw,thick,->] (3b) -- (6);
+\path[draw,thick,->] (4b) -- (3a);
+\path[draw,thick,->] (4b) -- (5a);
+\path[draw,thick,->] (5b) -- (6);
+\end{tikzpicture}
+\end{center}
+
+该图的最大流如下：
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (1,2) {$1$};
+
+\node[draw, circle] (2a) at (3,3) {$2$};
+\node[draw, circle] (3a) at (6,3) {$3$};
+\node[draw, circle] (4a) at (3,1) {$4$};
+\node[draw, circle] (5a) at (6,1) {$5$};
+
+\node[draw, circle] (2b) at (4,3) {$2$};
+\node[draw, circle] (3b) at (7,3) {$3$};
+\node[draw, circle] (4b) at (4,1) {$4$};
+\node[draw, circle] (5b) at (7,1) {$5$};
+
+\node[draw, circle] (6) at (9,2) {$6$};
+
+\path[draw,thick,->] (2a) -- (2b);
+\path[draw,thick,->] (3a) -- (3b);
+\path[draw,thick,->] (4a) -- (4b);
+\path[draw,thick,->] (5a) -- (5b);
+
+\path[draw,thick,->] (1) -- (2a);
+\path[draw,thick,->] (1) -- (4a);
+\path[draw,thick,->] (2b) -- (4a);
+\path[draw,thick,->] (3b) edge [bend right=30] (2a);
+\path[draw,thick,->] (3b) -- (5a);
+\path[draw,thick,->] (3b) -- (6);
+\path[draw,thick,->] (4b) -- (3a);
+\path[draw,thick,->] (4b) -- (5a);
+\path[draw,thick,->] (5b) -- (6);
+
+\path[draw=red,thick,->,line width=2pt] (1) -- (2a);
+\path[draw=red,thick,->,line width=2pt] (2a) -- (2b);
+\path[draw=red,thick,->,line width=2pt] (2b) -- (4a);
+\path[draw=red,thick,->,line width=2pt] (4a) -- (4b);
+\path[draw=red,thick,->,line width=2pt] (4b) -- (3a);
+\path[draw=red,thick,->,line width=2pt] (3a) -- (3b);
+\path[draw=red,thick,->,line width=2pt] (3b) -- (6);
+\end{tikzpicture}
+\end{center}
+
+因此，从源点到汇点的点不相交路径最大条数为 1。
+
+\section{最大匹配}
+
+\index{matching}
+\index{maximum matching}
+
+\key{最大匹配}问题要求在无向图中找出规模最大的结点对集合，使每对结点之间都有边相连，并且每个结点最多属于一个结点对。
+
+一般图的最大匹配存在多项式时间算法 \cite{edm65}，但这些算法较为复杂，在算法竞赛中很少出现。对于二分图，最大匹配问题容易得多，因为它可以归约为最大流问题。
+
+\subsubsection{寻找最大匹配}
+
+二分图的结点总能划分为两组，使图中的所有边都连接左侧组与右侧组。例如，在下图中，两组分别为 $\{1,2,3,4\}$ 和 $\{5,6,7,8\}$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+\end{tikzpicture}
+\end{center}
+该图的最大匹配大小为 3：
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+
+\path[draw=red,thick,-,line width=2pt] (1) -- (5);
+\path[draw=red,thick,-,line width=2pt] (2) -- (7);
+\path[draw=red,thick,-,line width=2pt] (3) -- (8);
+\end{tikzpicture}
+\end{center}
+
+可以通过向图中加入源点和汇点两个新结点，把二分图最大匹配归约为最大流问题。再从源点向每个左侧结点连边，并从每个右侧结点向汇点连边。这样，新图的最大流大小就等于原图的最大匹配大小。
+
+例如，上图的归约结果如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\node[draw, circle] (a) at (-2,2.25) {\phantom{0}};
+\node[draw, circle] (b) at (12,2.25) {\phantom{0}};
+
+\path[draw,thick,->] (1) -- (5);
+\path[draw,thick,->] (2) -- (7);
+\path[draw,thick,->] (3) -- (5);
+\path[draw,thick,->] (3) -- (6);
+\path[draw,thick,->] (3) -- (8);
+\path[draw,thick,->] (4) -- (7);
+
+\path[draw,thick,->] (a) -- (1);
+\path[draw,thick,->] (a) -- (2);
+\path[draw,thick,->] (a) -- (3);
+\path[draw,thick,->] (a) -- (4);
+\path[draw,thick,->] (5) -- (b);
+\path[draw,thick,->] (6) -- (b);
+\path[draw,thick,->] (7) -- (b);
+\path[draw,thick,->] (8) -- (b);
+\end{tikzpicture}
+\end{center}
+
+该图的最大流如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\node[draw, circle] (a) at (-2,2.25) {\phantom{0}};
+\node[draw, circle] (b) at (12,2.25) {\phantom{0}};
+
+\path[draw,thick,->] (3) -- (5);
+\path[draw,thick,->] (3) -- (6);
+\path[draw,thick,->] (4) -- (7);
+
+\path[draw,thick,->] (a) -- (1);
+\path[draw,thick,->] (a) -- (2);
+\path[draw,thick,->] (a) -- (3);
+\path[draw,thick,->] (a) -- (4);
+\path[draw,thick,->] (5) -- (b);
+\path[draw,thick,->] (6) -- (b);
+\path[draw,thick,->] (7) -- (b);
+\path[draw,thick,->] (8) -- (b);
+
+\path[draw=red,thick,->,line width=2pt] (1) -- (5);
+\path[draw=red,thick,->,line width=2pt] (2) -- (7);
+\path[draw=red,thick,->,line width=2pt] (3) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (a) -- (1);
+\path[draw=red,thick,->,line width=2pt] (a) -- (2);
+\path[draw=red,thick,->,line width=2pt] (a) -- (3);
+
+\path[draw=red,thick,->,line width=2pt] (5) -- (b);
+\path[draw=red,thick,->,line width=2pt] (7) -- (b);
+\path[draw=red,thick,->,line width=2pt] (8) -- (b);
+
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Hall 定理}
+
+\index{Hall's theorem}
+\index{perfect matching}
+
+\key{Hall 定理}可用于判断二分图是否存在覆盖全部左侧结点或全部右侧结点的匹配。如果左右两侧结点数量相同，Hall 定理可以判断能否构造覆盖图中所有结点的\key{完美匹配}。
+
+假设要寻找覆盖所有左侧结点的匹配。令 $X$ 为任意左侧结点集合，$f(X)$ 为这些结点的邻居集合。根据 Hall 定理，覆盖所有左侧结点的匹配存在，当且仅当对每个 $X$ 都有 $|X| \le |f(X)|$。
+
+在示例图中考察 Hall 定理。首先令 $X=\{1,3\}$，则 $f(X)=\{5,6,8\}$：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle, fill=lightgray] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle, fill=lightgray] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle, fill=lightgray] (5) at (8,4.5) {5};
+\node[draw, circle, fill=lightgray] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle, fill=lightgray] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+\end{tikzpicture}
+\end{center}
+
+因为 $|X|=2$ 且 $|f(X)|=3$，所以满足 Hall 定理的条件。接着令 $X=\{2,4\}$，则 $f(X)=\{7\}$：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle, fill=lightgray] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle, fill=lightgray] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle, fill=lightgray] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+\end{tikzpicture}
+\end{center}
+
+此时 $|X|=2$ 而 $|f(X)|=1$，不满足 Hall 定理的条件。这意味着该图不存在完美匹配。这个结果并不意外，因为已经知道该图的最大匹配大小是 3，而不是 4。
+
+如果 Hall 定理的条件不成立，集合 $X$ 也解释了\emph{为何}无法构造这样的匹配。由于 $X$ 中的结点数多于 $f(X)$，不可能为 $X$ 中每个结点都找到不同的配对。例如，在上图中，结点 2 和结点 4 都只能与结点 7 配对，这是不可能的。
+
+\subsubsection{Kőnig 定理}
+
+\index{Kőnig's theorem}
+\index{node cover}
+\index{minimum node cover}
+
+图的\key{最小点覆盖}是规模最小的结点集合，使图中每条边至少有一个端点属于该集合。在一般图中，求最小点覆盖是 NP 困难问题。然而，对于二分图，\key{Kőnig 定理}指出最小点覆盖的大小总是等于最大匹配的大小。因此，可以利用最大流算法计算最小点覆盖的大小。
+
+考虑下图，其最大匹配大小为 3：
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+
+\path[draw=red,thick,-,line width=2pt] (1) -- (5);
+\path[draw=red,thick,-,line width=2pt] (2) -- (7);
+\path[draw=red,thick,-,line width=2pt] (3) -- (6);
+\end{tikzpicture}
+\end{center}
+由 Kőnig 定理可知，其最小点覆盖的大小也为 3。可以构造如下点覆盖：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle, fill=lightgray] (1) at (2,4.5) {1};
+\node[draw, circle] (2) at (2,3) {2};
+\node[draw, circle, fill=lightgray] (3) at (2,1.5) {3};
+\node[draw, circle] (4) at (2,0) {4};
+\node[draw, circle] (5) at (8,4.5) {5};
+\node[draw, circle] (6) at (8,3) {6};
+\node[draw, circle, fill=lightgray] (7) at (8,1.5) {7};
+\node[draw, circle] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+\end{tikzpicture}
+\end{center}
+
+\index{independent set}
+\index{maximum independent set}
+
+不属于某个最小点覆盖的结点构成一个\key{最大独立集}。它是满足集合内任意两个结点之间都没有边的最大结点集合。一般图的最大独立集同样是 NP 困难问题，但在二分图中可以借助 Kőnig 定理高效求解。示例图中的最大独立集如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.60]
+\node[draw, circle] (1) at (2,4.5) {1};
+\node[draw, circle, fill=lightgray] (2) at (2,3) {2};
+\node[draw, circle] (3) at (2,1.5) {3};
+\node[draw, circle, fill=lightgray] (4) at (2,0) {4};
+\node[draw, circle, fill=lightgray] (5) at (8,4.5) {5};
+\node[draw, circle, fill=lightgray] (6) at (8,3) {6};
+\node[draw, circle] (7) at (8,1.5) {7};
+\node[draw, circle, fill=lightgray] (8) at (8,0) {8};
+
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (7);
+\path[draw,thick,-] (3) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (8);
+\path[draw,thick,-] (4) -- (7);
+\end{tikzpicture}
+\end{center}
+
+\section{路径覆盖}
+
+\index{path cover}
+
+\key{路径覆盖}是图中的一组路径，使图中每个结点都至少属于一条路径。对于有向无环图，求最小路径覆盖可以归约为在另一个图中求最大流。
+
+\subsubsection{点不相交路径覆盖}
+
+在\key{点不相交路径覆盖}中，每个结点恰好属于一条路径。例如，考虑下图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle] (7) at (4,-2) {7};
+
+\path[draw,thick,->,>=latex] (1) -- (5);
+\path[draw,thick,->,>=latex] (2) -- (6);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (5) -- (6);
+\path[draw,thick,->,>=latex] (6) -- (3);
+\path[draw,thick,->,>=latex] (6) -- (7);
+\end{tikzpicture}
+\end{center}
+
+该图的最小点不相交路径覆盖由三条路径组成。例如，可以选择下图所示的路径：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle] (7) at (4,-2) {7};
+
+\path[draw=red,thick,->,line width=2pt] (1) -- (5);
+\path[draw=red,thick,->,line width=2pt] (5) -- (6);
+\path[draw=red,thick,->,line width=2pt] (6) -- (7);
+\path[draw=red,thick,->,line width=2pt] (3) -- (4);
+\end{tikzpicture}
+\end{center}
+
+注意，其中一条路径只包含结点 2，因此路径可以不包含任何边。
+
+可以通过构造一个\emph{匹配图}来求最小点不相交路径覆盖。在匹配图中，原图每个结点都由左、右两个结点表示；若原图中存在一条对应的边，就从左侧结点向右侧结点连边。此外，匹配图还包含源点和汇点，并从源点向所有左侧结点连边、从所有右侧结点向汇点连边。
+
+所得图中的最大匹配对应原图中的最小点不相交路径覆盖。例如，上图对应的匹配图含有一个大小为 4 的最大匹配：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1a) at (0,6) {1};
+\node[draw, circle] (2a) at (0,5) {2};
+\node[draw, circle] (3a) at (0,4) {3};
+\node[draw, circle] (4a) at (0,3) {4};
+\node[draw, circle] (5a) at (0,2) {5};
+\node[draw, circle] (6a) at (0,1) {6};
+\node[draw, circle] (7a) at (0,0) {7};
+
+\node[draw, circle] (1b) at (4,6) {1};
+\node[draw, circle] (2b) at (4,5) {2};
+\node[draw, circle] (3b) at (4,4) {3};
+\node[draw, circle] (4b) at (4,3) {4};
+\node[draw, circle] (5b) at (4,2) {5};
+\node[draw, circle] (6b) at (4,1) {6};
+\node[draw, circle] (7b) at (4,0) {7};
+
+\node[draw, circle] (a) at (-3,3) {\phantom{0}};
+\node[draw, circle] (b) at (7,3) {\phantom{0}};
+
+%\path[draw,thick,->,>=latex] (1a) -- (5b);
+\path[draw,thick,->,>=latex] (2a) -- (6b);
+%\path[draw,thick,->,>=latex] (3a) -- (4b);
+%\path[draw,thick,->,>=latex] (5a) -- (6b);
+\path[draw,thick,->,>=latex] (6a) -- (3b);
+%\path[draw,thick,->,>=latex] (6a) -- (7b);
+
+\path[draw,thick,->,>=latex] (a) -- (1a);
+\path[draw,thick,->,>=latex] (a) -- (2a);
+\path[draw,thick,->,>=latex] (a) -- (3a);
+\path[draw,thick,->,>=latex] (a) -- (4a);
+\path[draw,thick,->,>=latex] (a) -- (5a);
+\path[draw,thick,->,>=latex] (a) -- (6a);
+\path[draw,thick,->,>=latex] (a) -- (7a);
+
+\path[draw,thick,->,>=latex] (1b) -- (b);
+\path[draw,thick,->,>=latex] (2b) -- (b);
+\path[draw,thick,->,>=latex] (3b) -- (b);
+\path[draw,thick,->,>=latex] (4b) -- (b);
+\path[draw,thick,->,>=latex] (5b) -- (b);
+\path[draw,thick,->,>=latex] (6b) -- (b);
+\path[draw,thick,->,>=latex] (7b) -- (b);
+
+\path[draw=red,thick,->,line width=2pt] (1a) -- (5b);
+\path[draw=red,thick,->,line width=2pt] (5a) -- (6b);
+\path[draw=red,thick,->,line width=2pt] (6a) -- (7b);
+\path[draw=red,thick,->,line width=2pt] (3a) -- (4b);
+
+\end{tikzpicture}
+\end{center}
+
+匹配图的最大匹配中，每条边都对应原图最小点不相交路径覆盖中的一条边。因此，最小点不相交路径覆盖的大小为 $n-c$，其中 $n$ 是原图的结点数，$c$ 是最大匹配大小。
+
+\subsubsection{一般路径覆盖}
+
+\key{一般路径覆盖}允许一个结点属于多条路径。由于结点可以在不同路径中重复使用，最小一般路径覆盖可能小于最小点不相交路径覆盖。再次考虑下图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle] (7) at (4,-2) {7};
+
+\path[draw,thick,->,>=latex] (1) -- (5);
+\path[draw,thick,->,>=latex] (2) -- (6);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (5) -- (6);
+\path[draw,thick,->,>=latex] (6) -- (3);
+\path[draw,thick,->,>=latex] (6) -- (7);
+\end{tikzpicture}
+\end{center}
+
+该图的最小一般路径覆盖由两条路径组成。例如，第一条路径可以是：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle] (7) at (4,-2) {7};
+
+\path[draw=red,thick,->,line width=2pt] (1) -- (5);
+\path[draw=red,thick,->,line width=2pt] (5) -- (6);
+\path[draw=red,thick,->,line width=2pt] (6) -- (3);
+\path[draw=red,thick,->,line width=2pt] (3) -- (4);
+\end{tikzpicture}
+\end{center}
+第二条路径可以是：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle] (7) at (4,-2) {7};
+
+\path[draw=red,thick,->,line width=2pt] (2) -- (6);
+\path[draw=red,thick,->,line width=2pt] (6) -- (7);
+\end{tikzpicture}
+\end{center}
+
+求最小一般路径覆盖的方法与求最小点不相交路径覆盖几乎相同。只需向匹配图添加一些新边：只要原图中存在一条从 $a$ 到 $b$ 的路径（可能经过多条边），就在匹配图中加入边 $a \rightarrow b$。
+
+上图对应的匹配图如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1a) at (0,6) {1};
+\node[draw, circle] (2a) at (0,5) {2};
+\node[draw, circle] (3a) at (0,4) {3};
+\node[draw, circle] (4a) at (0,3) {4};
+\node[draw, circle] (5a) at (0,2) {5};
+\node[draw, circle] (6a) at (0,1) {6};
+\node[draw, circle] (7a) at (0,0) {7};
+
+\node[draw, circle] (1b) at (4,6) {1};
+\node[draw, circle] (2b) at (4,5) {2};
+\node[draw, circle] (3b) at (4,4) {3};
+\node[draw, circle] (4b) at (4,3) {4};
+\node[draw, circle] (5b) at (4,2) {5};
+\node[draw, circle] (6b) at (4,1) {6};
+\node[draw, circle] (7b) at (4,0) {7};
+
+\node[draw, circle] (a) at (-3,3) {\phantom{0}};
+\node[draw, circle] (b) at (7,3) {\phantom{0}};
+
+
+%\path[draw,thick,->,>=latex] (1a) -- (5b);
+\path[draw,thick,->,>=latex] (1a) -- (6b);
+\path[draw,thick,->,>=latex] (1a) -- (7b);
+\path[draw,thick,->,>=latex] (1a) -- (3b);
+\path[draw,thick,->,>=latex] (1a) -- (4b);
+\path[draw,thick,->,>=latex] (5a) -- (6b);
+\path[draw,thick,->,>=latex] (5a) -- (7b);
+%\path[draw,thick,->,>=latex] (5a) -- (3b);
+\path[draw,thick,->,>=latex] (5a) -- (4b);
+\path[draw,thick,->,>=latex] (6a) -- (7b);
+%\path[draw,thick,->,>=latex] (6a) -- (7b);
+\path[draw,thick,->,>=latex] (6a) -- (3b);
+%\path[draw,thick,->,>=latex] (3a) -- (4b);
+%\path[draw,thick,->,>=latex] (2a) -- (6b);
+\path[draw,thick,->,>=latex] (2a) -- (7b);
+\path[draw,thick,->,>=latex] (2a) -- (3b);
+\path[draw,thick,->,>=latex] (2a) -- (4b);
+
+
+\path[draw,thick,->,>=latex] (a) -- (1a);
+\path[draw,thick,->,>=latex] (a) -- (2a);
+\path[draw,thick,->,>=latex] (a) -- (3a);
+\path[draw,thick,->,>=latex] (a) -- (4a);
+\path[draw,thick,->,>=latex] (a) -- (5a);
+\path[draw,thick,->,>=latex] (a) -- (6a);
+\path[draw,thick,->,>=latex] (a) -- (7a);
+
+\path[draw,thick,->,>=latex] (1b) -- (b);
+\path[draw,thick,->,>=latex] (2b) -- (b);
+\path[draw,thick,->,>=latex] (3b) -- (b);
+\path[draw,thick,->,>=latex] (4b) -- (b);
+\path[draw,thick,->,>=latex] (5b) -- (b);
+\path[draw,thick,->,>=latex] (6b) -- (b);
+\path[draw,thick,->,>=latex] (7b) -- (b);
+
+\path[draw=red,thick,->,line width=2pt] (1a) -- (5b);
+\path[draw=red,thick,->,line width=2pt] (5a) -- (3b);
+\path[draw=red,thick,->,line width=2pt] (3a) -- (4b);
+\path[draw=red,thick,->,line width=2pt] (2a) -- (6b);
+\path[draw=red,thick,->,line width=2pt] (6a) -- (7b);
+
+
+% \path[draw=red,thick,->,line width=2pt] (1a) -- (6b);
+% \path[draw=red,thick,->,line width=2pt] (1a) -- (7b);
+% \path[draw=red,thick,->,line width=2pt] (1a) -- (3b);
+% \path[draw=red,thick,->,line width=2pt] (1a) -- (4b);
+% \path[draw=red,thick,->,line width=2pt] (5a) -- (6b);
+% \path[draw=red,thick,->,line width=2pt] (5a) -- (7b);
+% \path[draw=red,thick,->,line width=2pt] (5a) -- (3b);
+% \path[draw=red,thick,->,line width=2pt] (5a) -- (4b);
+% \path[draw=red,thick,->,line width=2pt] (6a) -- (7b);
+% \path[draw=red,thick,->,line width=2pt] (6a) -- (7b);
+% \path[draw=red,thick,->,line width=2pt] (6a) -- (3b);
+% \path[draw=red,thick,->,line width=2pt] (3a) -- (4b);
+% \path[draw=red,thick,->,line width=2pt] (2a) -- (6b);
+% \path[draw=red,thick,->,line width=2pt] (2a) -- (7b);
+% \path[draw=red,thick,->,line width=2pt] (2a) -- (3b);
+% \path[draw=red,thick,->,line width=2pt] (2a) -- (4b);
+
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Dilworth 定理}
+
+\index{Dilworth's theorem}
+\index{antichain}
+
+\key{反链}是图中的一个结点集合，其中任意一个结点都无法沿图中的边到达另一个结点。\key{Dilworth 定理}指出，在有向无环图中，最小一般路径覆盖的大小等于最大反链的大小。
+
+例如，在下图中，结点 3 和结点 7 构成一条反链：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,0) {1};
+\node[draw, circle] (2) at (2,0) {2};
+\node[draw, circle, fill=lightgray] (3) at (4,0) {3};
+\node[draw, circle] (4) at (6,0) {4};
+\node[draw, circle] (5) at (0,-2) {5};
+\node[draw, circle] (6) at (2,-2) {6};
+\node[draw, circle, fill=lightgray] (7) at (4,-2) {7};
+
+\path[draw,thick,->,>=latex] (1) -- (5);
+\path[draw,thick,->,>=latex] (2) -- (6);
+\path[draw,thick,->,>=latex] (3) -- (4);
+\path[draw,thick,->,>=latex] (5) -- (6);
+\path[draw,thick,->,>=latex] (6) -- (3);
+\path[draw,thick,->,>=latex] (6) -- (7);
+\end{tikzpicture}
+\end{center}
+
+这是一条最大反链，因为无法构造包含三个结点的反链。前面已经看到，该图的最小一般路径覆盖由两条路径组成。

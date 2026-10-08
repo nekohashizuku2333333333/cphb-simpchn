@@ -1,0 +1,556 @@
+\chapter{简介}
+
+算法竞赛结合了两个主题：（1）算法设计；（2）算法实现。
+
+\key{算法设计}包括问题求解与数学思维，需要分析问题并创造性地解决问题的能力。用于解决问题的算法必须既正确又高效，而题目的核心往往正是设计一种高效算法。
+
+算法理论知识对竞赛程序员十分重要。通常，一道题的解法由知名技巧与新的洞察共同组成。算法竞赛中出现的技巧，也构成了算法科学研究的基础。
+
+\key{算法实现}要求良好的编程能力。在算法竞赛中，评测系统会用一组测试数据检验所实现的算法。因此，仅有正确的算法思路还不够，实现也必须正确。
+
+竞赛中的良好编码风格应当直接、简洁。由于时间有限，程序必须快速写出。与传统软件工程不同，竞赛程序很短（通常最多几百行代码），赛后也无须维护。
+
+\section{编程语言}
+
+\index{programming language}
+
+目前，算法竞赛中最流行的编程语言是 C++、Python 和 Java。例如，在 2017 年 Google Code Jam 排名前 3000 的参赛者中，79\% 使用 C++，16\% 使用 Python，8\% 使用 Java \cite{goo17}；部分参赛者使用了多种语言。
+
+许多人认为 C++ 是竞赛程序员的最佳选择，而且几乎所有竞赛系统都支持 C++。C++ 的优势在于执行效率很高，并且标准库包含大量数据结构与算法。
+
+另一方面，掌握多种语言并了解各自优势也很有帮助。例如，若题目需要大整数运算，Python 可能是不错的选择，因为它内置了大整数运算。不过，大多数竞赛题都会避免让某一种特定编程语言获得不公平优势。
+
+本书所有示例程序均使用 C++ 编写，并经常使用标准库中的数据结构和算法。程序遵循 C++11 标准，目前绝大多数竞赛均可使用该标准。如果你还不会 C++，现在正是开始学习的好时机。
+
+\subsubsection{C++ 代码模板}
+
+算法竞赛中典型的 C++ 代码模板如下：
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    // solution comes here
+}
+\end{lstlisting}
+
+代码开头的 \texttt{\#include} 行是 \texttt{g++} 编译器提供的功能，可一次包含整个标准库。因此，无须分别包含 \texttt{iostream}、\texttt{vector}、\texttt{algorithm} 等库，它们都会自动可用。
+
+\texttt{using} 行声明可以在代码中直接使用标准库的类和函数。没有这一行时，例如必须写成 \texttt{std::cout}；有了它，只写 \texttt{cout} 即可。
+
+可以使用以下命令编译代码：
+
+\begin{lstlisting}
+g++ -std=c++11 -O2 -Wall test.cpp -o test
+\end{lstlisting}
+
+该命令由源代码 \texttt{test.cpp} 生成二进制文件 \texttt{test}。编译器遵循 C++11 标准（\texttt{-std=c++11}），优化代码（\texttt{-O2}），并显示潜在错误的警告（\texttt{-Wall}）。
+
+\section{输入与输出}
+
+\index{input and output}
+
+大多数竞赛使用标准流读入和输出。在 C++ 中，标准输入流是 \texttt{cin}，标准输出流是 \texttt{cout}；也可以使用 C 语言函数 \texttt{scanf} 和 \texttt{printf}。
+
+程序输入通常由以空格和换行符分隔的数字与字符串组成，可以按如下方式从 \texttt{cin} 读取：
+
+\begin{lstlisting}
+int a, b;
+string x;
+cin >> a >> b >> x;
+\end{lstlisting}
+
+只要输入的各元素之间至少有一个空格或换行符，这种代码就能正常工作。例如，上述代码可以读取下面两种输入：
+\begin{lstlisting}
+123 456 monkey
+\end{lstlisting}
+\begin{lstlisting}
+123    456
+monkey
+\end{lstlisting}
+\texttt{cout} 流的输出方式如下：
+\begin{lstlisting}
+int a = 123, b = 456;
+string x = "monkey";
+cout << a << " " << b << " " << x << "\n";
+\end{lstlisting}
+
+输入输出有时会成为程序的性能瓶颈。在代码开头加入以下两行可以提高输入输出效率：
+
+\begin{lstlisting}
+ios::sync_with_stdio(0);
+cin.tie(0);
+\end{lstlisting}
+
+注意，换行符 \texttt{"\textbackslash n"} 比 \texttt{endl} 更快，因为 \texttt{endl} 总会触发刷新缓冲区操作。
+
+C 语言函数 \texttt{scanf} 和 \texttt{printf} 是 C++ 标准流的替代方案。它们通常稍快，但也更难使用。下面的代码读取两个整数：
+\begin{lstlisting}
+int a, b;
+scanf("%d %d", &a, &b);
+\end{lstlisting}
+下面的代码输出两个整数：
+\begin{lstlisting}
+int a = 123, b = 456;
+printf("%d %d\n", a, b);
+\end{lstlisting}
+
+有时程序需要读取可能包含空格的整行输入，可以使用 \texttt{getline} 函数：
+
+\begin{lstlisting}
+string s;
+getline(cin, s);
+\end{lstlisting}
+
+若数据量未知，可以使用以下循环：
+\begin{lstlisting}
+while (cin >> x) {
+    // code
+}
+\end{lstlisting}
+该循环逐个读取输入元素，直到没有更多数据。
+
+有些竞赛系统使用文件输入输出。一种简单做法是照常使用标准流编写代码，但在代码开头加入以下两行：
+\begin{lstlisting}
+freopen("input.txt", "r", stdin);
+freopen("output.txt", "w", stdout);
+\end{lstlisting}
+此后，程序从文件 ``input.txt'' 读取输入，并把输出写入文件 ``output.txt''。
+
+\section{数值处理}
+
+\index{integer}
+
+\subsubsection{整数}
+
+算法竞赛中最常用的整数类型是 32 位的 \texttt{int}，取值范围为 $-2^{31} \ldots 2^{31}-1$，约为 $-2 \cdot 10^9 \ldots 2 \cdot 10^9$。若 \texttt{int} 不够用，可以采用 64 位的 \texttt{long long}，其取值范围为 $-2^{63} \ldots 2^{63}-1$，约为 $-9 \cdot 10^{18} \ldots 9 \cdot 10^{18}$。
+
+下面的代码定义了一个 \texttt{long long} 变量：
+\begin{lstlisting}
+long long x = 123456789123456789LL;
+\end{lstlisting}
+后缀 \texttt{LL} 表示该数的类型为 \texttt{long long}。
+
+使用 \texttt{long long} 时的常见错误是，代码中的某处仍使用了 \texttt{int}。例如，下面的代码包含一个不易察觉的错误：
+
+\begin{lstlisting}
+int a = 123456789;
+long long b = a*a;
+cout << b << "\n"; // -1757895751
+\end{lstlisting}
+
+虽然变量 \texttt{b} 的类型是 \texttt{long long}，但表达式 \texttt{a*a} 中的两个数都是 \texttt{int}，结果也会按 \texttt{int} 计算。因此，变量 \texttt{b} 得到错误结果。可以把 \texttt{a} 的类型改为 \texttt{long long}，或把表达式改为 \texttt{(long long)a*a}。
+
+竞赛题通常会保证 \texttt{long long} 足够使用。不过，\texttt{g++} 编译器还提供 128 位类型 \texttt{\_\_int128\_t}，其取值范围为 $-2^{127} \ldots 2^{127}-1$，约为 $-10^{38} \ldots 10^{38}$。但并非所有竞赛系统都支持该类型。
+
+\subsubsection{模运算}
+
+\index{remainder}
+\index{modular arithmetic}
+
+用 $x \bmod m$ 表示 $x$ 除以 $m$ 的余数。例如，$17 \bmod 5 = 2$，因为 $17 = 3 \cdot 5 + 2$。
+
+有时一道题的答案非常大，但只需输出“模 $m$”的结果，即答案除以 $m$ 的余数（例如“模 $10^9+7$”）。这样即使实际答案很大，也只需使用 \texttt{int} 和 \texttt{long long}。
+
+余数的一个重要性质是，在加法、减法和乘法中，可以先取模再进行运算：
+
+\[
+\begin{array}{rcr}
+(a+b) \bmod m & = & (a \bmod m + b \bmod m) \bmod m \\
+(a-b) \bmod m & = & (a \bmod m - b \bmod m) \bmod m \\
+(a \cdot b) \bmod m & = & (a \bmod m \cdot b \bmod m) \bmod m
+\end{array}
+\]
+
+因此，可以在每次运算后取模，使数值始终不会变得过大。
+
+例如，下面的代码计算 $n!$（$n$ 的阶乘）模 $m$ 的结果：
+\begin{lstlisting}
+long long x = 1;
+for (int i = 2; i <= n; i++) {
+    x = (x*i)%m;
+}
+cout << x%m << "\n";
+\end{lstlisting}
+
+通常希望余数始终位于 $0\ldots m-1$。然而，在 C++ 等语言中，负数取模的结果为零或负数。为确保余数非负，可以先照常取模，若结果为负再加上 $m$：
+\begin{lstlisting}
+x = x%m;
+if (x < 0) x += m;
+\end{lstlisting}
+不过，只有代码中存在减法、余数可能变为负数时才需要这样处理。
+
+\subsubsection{浮点数}
+
+\index{floating point number}
+
+算法竞赛中常用的浮点类型是 64 位 \texttt{double}，以及 \texttt{g++} 扩展提供的 80 位 \texttt{long double}。大多数情况下 \texttt{double} 已经足够，但 \texttt{long double} 精度更高。
+
+题目通常会说明答案所需精度。一种简单的输出方法是使用 \texttt{printf}，并在格式字符串中指定小数位数。例如，下面的代码以 9 位小数输出 $x$：
+
+\begin{lstlisting}
+printf("%.9f\n", x);
+\end{lstlisting}
+
+使用浮点数的困难在于，有些数无法被精确表示，从而产生舍入误差。例如，下面代码的结果令人意外：
+
+\begin{lstlisting}
+double x = 0.3*3+0.1;
+printf("%.20f\n", x); // 0.99999999999999988898
+\end{lstlisting}
+
+由于舍入误差，\texttt{x} 的值略小于 1，而正确值应为 1。
+
+使用 \texttt{==} 运算符比较浮点数存在风险，因为两个理论上相等的值可能因精度误差而不相等。更好的做法是：若两数之差小于一个很小的数 $\varepsilon$，就认为它们相等。
+
+实践中可按如下方式比较（$\varepsilon=10^{-9}$）：
+
+\begin{lstlisting}
+if (abs(a-b) < 1e-9) {
+    // a and b are equal
+}
+\end{lstlisting}
+
+注意，尽管浮点数可能不精确，但一定范围内的整数仍可精确表示。例如，\texttt{double} 能精确表示绝对值不超过 $2^{53}$ 的所有整数。
+
+\section{缩短代码}
+
+算法竞赛要求尽快写出程序，因此短小的代码最为理想。竞赛程序员常常为数据类型和其他代码元素定义更短的名称。
+
+\subsubsection{类型名称}
+\index{tuppdef@\texttt{typedef}}
+使用 \texttt{typedef} 可以为数据类型指定更短的名称。例如，\texttt{long long} 较长，可以定义简称 \texttt{ll}：
+\begin{lstlisting}
+typedef long long ll;
+\end{lstlisting}
+此后，代码
+\begin{lstlisting}
+long long a = 123456789;
+long long b = 987654321;
+cout << a*b << "\n";
+\end{lstlisting}
+可以缩写为：
+\begin{lstlisting}
+ll a = 123456789;
+ll b = 987654321;
+cout << a*b << "\n";
+\end{lstlisting}
+
+\texttt{typedef} 也可用于更复杂的类型。例如，下面的代码用 \texttt{vi} 表示整数向量，用 \texttt{pi} 表示包含两个整数的二元组。
+\begin{lstlisting}
+typedef vector<int> vi;
+typedef pair<int,int> pi;
+\end{lstlisting}
+
+\subsubsection{宏}
+\index{macro}
+另一种缩短代码的方法是定义\key{宏}。宏会使代码中的特定字符串在编译前被替换。C++ 使用关键字 \texttt{\#define} 定义宏。
+
+例如，可以定义以下宏：
+\begin{lstlisting}
+#define F first
+#define S second
+#define PB push_back
+#define MP make_pair
+\end{lstlisting}
+此后，代码
+\begin{lstlisting}
+v.push_back(make_pair(y1,x1));
+v.push_back(make_pair(y2,x2));
+int d = v[i].first+v[i].second;
+\end{lstlisting}
+可以缩写为：
+\begin{lstlisting}
+v.PB(MP(y1,x1));
+v.PB(MP(y2,x2));
+int d = v[i].F+v[i].S;
+\end{lstlisting}
+
+宏也可以带参数，从而缩短循环等结构。例如，可以定义如下宏：
+\begin{lstlisting}
+#define REP(i,a,b) for (int i = a; i <= b; i++)
+\end{lstlisting}
+此后，代码
+\begin{lstlisting}
+for (int i = 1; i <= n; i++) {
+    search(i);
+}
+\end{lstlisting}
+可以缩写为：
+\begin{lstlisting}
+REP(i,1,n) {
+    search(i);
+}
+\end{lstlisting}
+
+宏有时会引入难以发现的错误。例如，考虑下面这个计算平方的宏：
+\begin{lstlisting}
+#define SQ(a) a*a
+\end{lstlisting}
+这个宏\emph{并非}总能按预期工作。例如，代码
+\begin{lstlisting}
+cout << SQ(3+3) << "\n";
+\end{lstlisting}
+等价于
+\begin{lstlisting}
+cout << 3+3*3+3 << "\n"; // 15
+\end{lstlisting}
+
+更好的宏定义如下：
+\begin{lstlisting}
+#define SQ(a) (a)*(a)
+\end{lstlisting}
+此时代码
+\begin{lstlisting}
+cout << SQ(3+3) << "\n";
+\end{lstlisting}
+等价于
+\begin{lstlisting}
+cout << (3+3)*(3+3) << "\n"; // 36
+\end{lstlisting}
+
+
+\section{数学基础}
+
+数学在算法竞赛中扮演重要角色；没有良好的数学能力，就很难成为成功的竞赛程序员。本节介绍本书后续内容所需的一些重要数学概念与公式。
+
+\subsubsection{求和公式}
+
+形如
+\[\sum_{x=1}^n x^k = 1^k+2^k+3^k+\ldots+n^k,\]
+的和，其中 $k$ 为正整数，都有一个 $k+1$ 次多项式形式的闭式公式。例如\footnote{\index{Faulhaber's formula}这类求和甚至存在通用公式，称为\key{Faulhaber 公式}，但它过于复杂，此处不作介绍。}，
+\[\sum_{x=1}^n x = 1+2+3+\ldots+n = \frac{n(n+1)}{2}\]
+以及
+\[\sum_{x=1}^n x^2 = 1^2+2^2+3^2+\ldots+n^2 = \frac{n(n+1)(2n+1)}{6}.\]
+
+\key{等差数列}\index{arithmetic progression}是相邻两项之差恒定的数列。例如，
+\[3, 7, 11, 15\]
+是公差为 4 的等差数列。等差数列之和可用下式计算：
+\[\underbrace{a + \cdots + b}_{n \,\, \textrm{项}} = \frac{n(a+b)}{2}\]
+其中 $a$ 是首项，$b$ 是末项，$n$ 是项数。例如，
+\[3+7+11+15=\frac{4 \cdot (3+15)}{2} = 36.\]
+该公式基于如下事实：总和由 $n$ 个数构成，每个数的平均值为 $(a+b)/2$。
+
+\index{geometric progression}
+\key{等比数列}是相邻两项之比恒定的数列。例如，
+\[3,6,12,24\]
+是公比为 2 的等比数列。等比数列之和可用下式计算：
+\[a + ak + ak^2 + \cdots + b = \frac{bk-a}{k-1}\]
+其中 $a$ 是首项，$b$ 是末项，相邻两项之比为 $k$。例如，
+\[3+6+12+24=\frac{24 \cdot 2 - 3}{2-1} = 45.\]
+
+该公式可按如下方式推导。令
+\[ S = a + ak + ak^2 + \cdots + b .\]
+两边同时乘以 $k$，得到
+\[ kS = ak + ak^2 + ak^3 + \cdots + bk,\]
+解方程
+\[ kS-S = bk-a\]
+即可得到上述公式。
+
+等比数列求和的一个特殊情况是
+\[1+2+4+8+\ldots+2^{n-1}=2^n-1.\]
+
+\index{harmonic sum}
+
+\key{调和和}形如
+\[ \sum_{x=1}^n \frac{1}{x} = 1+\frac{1}{2}+\frac{1}{3}+\ldots+\frac{1}{n}.\]
+
+调和和的一个上界是 $\log_2(n)+1$。具体而言，可以把每一项 $1/k$ 的分母 $k$ 改为不超过它的最大 2 的幂。例如，当 $n=6$ 时，可作如下估计：
+\[ 1+\frac{1}{2}+\frac{1}{3}+\frac{1}{4}+\frac{1}{5}+\frac{1}{6} \le
+1+\frac{1}{2}+\frac{1}{2}+\frac{1}{4}+\frac{1}{4}+\frac{1}{4}.\]
+该上界由 $\log_2(n)+1$ 个部分组成（$1$、$2 \cdot 1/2$、$4 \cdot 1/4$ 等），每部分的值至多为 1。
+
+\subsubsection{集合论}
+
+\index{set theory}
+\index{set}
+\index{intersection}
+\index{union}
+\index{difference}
+\index{subset}
+\index{universal set}
+\index{complement}
+
+\key{集合}是若干元素的汇集。例如，集合
+\[X=\{2,4,7\}\]
+包含元素 2、4、7。符号 $\emptyset$ 表示空集，$|S|$ 表示集合 $S$ 的大小，即集合中的元素个数。例如，上述集合满足 $|X|=3$。
+
+若集合 $S$ 包含元素 $x$，记为 $x \in S$；否则记为 $x \notin S$。例如，上述集合满足
+\[4 \in X \hspace{10pt}\textrm{且}\hspace{10pt} 5 \notin X.\]
+
+\begin{samepage}
+可以通过集合运算构造新集合：
+\begin{itemize}
+\item \key{交集} $A \cap B$ 由同时属于 $A$ 和 $B$ 的元素组成。例如，若 $A=\{1,2,5\}$、$B=\{2,4\}$，则 $A \cap B = \{2\}$。
+\item \key{并集} $A \cup B$ 由属于 $A$ 或 $B$（或同时属于二者）的元素组成。例如，若 $A=\{3,7\}$、$B=\{2,3,8\}$，则 $A \cup B = \{2,3,7,8\}$。
+\item \key{补集} $\bar A$ 由不属于 $A$ 的元素组成。补集的含义取决于包含所有可能元素的\key{全集}。例如，若 $A=\{1,2,5,7\}$，全集为 $\{1,2,\ldots,10\}$，则 $\bar A = \{3,4,6,8,9,10\}$。
+\item \key{差集} $A \setminus B = A \cap \bar B$ 由属于 $A$ 但不属于 $B$ 的元素组成。注意，$B$ 可以包含不属于 $A$ 的元素。例如，若 $A=\{2,3,7,8\}$、$B=\{3,5,8\}$，则 $A \setminus B = \{2,7\}$。
+\end{itemize}
+\end{samepage}
+
+若 $A$ 的每个元素都属于 $S$，则称 $A$ 是 $S$ 的\key{子集}，记作 $A \subset S$。集合 $S$ 总共有 $2^{|S|}$ 个子集，其中包括空集。例如，集合 $\{2,4,7\}$ 的子集为
+\begin{center}
+$\emptyset$,
+$\{2\}$, $\{4\}$, $\{7\}$, $\{2,4\}$, $\{2,7\}$, $\{4,7\}$ and $\{2,4,7\}$.
+\end{center}
+
+常用集合包括 $\mathbb{N}$（自然数）、$\mathbb{Z}$（整数）、$\mathbb{Q}$（有理数）和 $\mathbb{R}$（实数）。根据具体语境，$\mathbb{N}$ 有两种定义：$\mathbb{N}=\{0,1,2,\ldots\}$ 或 $\mathbb{N}=\{1,2,3,...\}$。
+
+还可以使用如下规则构造集合：
+\[\{f(n) : n \in S\},\]
+其中 $f(n)$ 是某个函数。该集合包含所有形如 $f(n)$ 的元素，其中 $n$ 属于 $S$。例如，集合
+\[X=\{2n : n \in \mathbb{Z}\}\]
+包含所有偶数。
+
+\subsubsection{逻辑}
+
+\index{logic}
+\index{negation}
+\index{conjuction}
+\index{disjunction}
+\index{implication}
+\index{equivalence}
+
+逻辑表达式的值为\key{真}（1）或\key{假}（0）。最重要的逻辑运算符是 $\lnot$（\key{否定}）、$\land$（\key{合取}）、$\lor$（\key{析取}）、$\Rightarrow$（\key{蕴含}）和 $\Leftrightarrow$（\key{等价}）。下表给出这些运算符的含义：
+
+\begin{center}
+\begin{tabular}{rr|rrrrrrr}
+$A$ & $B$ & $\lnot A$ & $\lnot B$ & $A \land B$ & $A \lor B$ & $A \Rightarrow B$ & $A \Leftrightarrow B$ \\
+\hline
+0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+0 & 1 & 1 & 0 & 0 & 1 & 1 & 0 \\
+1 & 0 & 0 & 1 & 0 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 & 1 & 1 & 1 & 1 \\
+\end{tabular}
+\end{center}
+
+表达式 $\lnot A$ 的值与 $A$ 相反。$A \land B$ 在 $A$、$B$ 均为真时为真；$A \lor B$ 在 $A$、$B$ 至少一个为真时为真。若 $A$ 为真时 $B$ 也总为真，则 $A \Rightarrow B$ 为真。若 $A$、$B$ 同真或同假，则 $A \Leftrightarrow B$ 为真。
+
+\index{predicate}
+
+\key{谓词}是其真假取决于参数的表达式，通常用大写字母表示。例如，可定义谓词 $P(x)$：当且仅当 $x$ 为素数时为真。按此定义，$P(7)$ 为真，而 $P(8)$ 为假。
+
+\index{quantifier}
+
+\key{量词}把逻辑表达式与集合中的元素联系起来。最重要的量词是 $\forall$（\key{任意}）和 $\exists$（\key{存在}）。例如，
+\[\forall x (\exists y (y < x))\]
+表示对集合中的每个元素 $x$，都存在集合中的元素 $y$ 满足 $y<x$。该命题在整数集中为真，在自然数集中为假。
+
+利用上述记号可以表达多种逻辑命题。例如，
+\[\forall x ((x>1 \land \lnot P(x)) \Rightarrow (\exists a (\exists b (a > 1 \land b > 1 \land x = ab))))\]
+表示若整数 $x>1$ 且不是素数，则存在大于 1 的整数 $a$、$b$，使得 $x=ab$。该命题在整数集中为真。
+
+\subsubsection{函数}
+
+函数 $\lfloor x \rfloor$ 把 $x$ 向下取整，函数 $\lceil x \rceil$ 把 $x$ 向上取整。例如，
+\[ \lfloor 3/2 \rfloor = 1 \hspace{10pt} \textrm{且} \hspace{10pt} \lceil 3/2 \rceil = 2.\]
+
+函数 $\min(x_1,x_2,\ldots,x_n)$ 与 $\max(x_1,x_2,\ldots,x_n)$ 分别返回 $x_1,x_2,\ldots,x_n$ 中的最小值和最大值。例如，
+\[ \min(1,2,3)=1 \hspace{10pt} \textrm{且} \hspace{10pt} \max(1,2,3)=3.\]
+
+\index{factorial}
+
+\key{阶乘} $n!$ 可定义为
+\[\prod_{x=1}^n x = 1 \cdot 2 \cdot 3 \cdot \ldots \cdot n\]
+或递归定义为
+\[
+\begin{array}{lcl}
+0! & = & 1 \\
+n! & = & n \cdot (n-1)! \\
+\end{array}
+\]
+
+\index{Fibonacci number}
+
+\key{Fibonacci 数}
+%\footnote{Fibonacci (c. 1175--1250) was an Italian mathematician.}
+会出现在许多问题中，可递归定义如下：
+\[
+\begin{array}{lcl}
+f(0) & = & 0 \\
+f(1) & = & 1 \\
+f(n) & = & f(n-1)+f(n-2) \\
+\end{array}
+\]
+最初若干个 Fibonacci 数为
+\[0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, \ldots\]
+计算 Fibonacci 数还有一个闭式公式，有时称为\index{Binet's formula}\key{Binet 公式}：
+\[f(n)=\frac{(1 + \sqrt{5})^n - (1-\sqrt{5})^n}{2^n \sqrt{5}}.\]
+
+\subsubsection{对数}
+
+\index{logarithm}
+
+数 $x$ 的\key{对数}记作 $\log_k(x)$，其中 $k$ 是底数。根据定义，$\log_k(x)=a$ 当且仅当 $k^a=x$。
+
+对数的一项实用性质是：$\log_k(x)$ 等于把 $x$ 连续除以 $k$ 直至得到 1 所需的次数。例如，$\log_2(32)=5$，因为需要除以 2 五次：
+
+\[32 \rightarrow 16 \rightarrow 8 \rightarrow 4 \rightarrow 2 \rightarrow 1 \]
+
+对数常用于算法分析，因为许多高效算法每一步都会把某个量减半。因此，可以用对数估计算法效率。
+
+乘积的对数为
+\[\log_k(ab) = \log_k(a)+\log_k(b),\]
+因此，
+\[\log_k(x^n) = n \cdot \log_k(x).\]
+商的对数为
+\[\log_k\Big(\frac{a}{b}\Big) = \log_k(a)-\log_k(b).\]
+另一个实用公式是
+\[\log_u(x) = \frac{\log_k(x)}{\log_k(u)},\]
+借助该公式，只要能计算某个固定底数的对数，就能计算任意底数的对数。
+
+\index{natural logarithm}
+
+数 $x$ 的\key{自然对数} $\ln(x)$ 以 $e \approx 2.71828$ 为底。对数的另一项性质是：整数 $x$ 的 $b$ 进制表示位数为 $\lfloor \log_b(x)+1 \rfloor$。例如，$123$ 的二进制表示为 1111011，并且 $\lfloor \log_2(123)+1 \rfloor = 7$。
+
+\section{竞赛与资源}
+
+\subsubsection{IOI}
+
+国际信息学奥林匹克竞赛（IOI）是面向中学生的年度编程竞赛。每个国家可派出由四名学生组成的代表队，通常约有来自 80 个国家的 300 名选手参赛。
+
+IOI 包含两场各五小时的比赛，每场要求选手解决三道难度不一的算法题。题目划分为若干子任务，每个子任务有相应分值。尽管选手以代表队形式参赛，比赛仍按个人进行。
+
+IOI 教学大纲 \cite{iois} 规定了题目可以涉及的主题。本书覆盖了大纲中的几乎所有主题。
+
+各国通过国内竞赛选拔 IOI 参赛者。IOI 之前还会举办许多区域竞赛，例如波罗的海信息学奥林匹克竞赛（BOI）、中欧信息学奥林匹克竞赛（CEOI）和亚太信息学奥林匹克竞赛（APIO）。
+
+一些国家会为未来的 IOI 选手举办在线训练赛，例如克罗地亚信息学公开赛 \cite{coci} 和美国计算机奥林匹克竞赛 \cite{usaco}。此外，网上还提供大量波兰竞赛题目 \cite{main}。
+
+\subsubsection{ICPC}
+
+国际大学生程序设计竞赛（ICPC）是面向大学生的年度编程竞赛。每支队伍由三名学生组成；与 IOI 不同，队员共同协作，每队只有一台计算机。
+
+ICPC 分为多个阶段，最终最优秀的队伍受邀参加全球总决赛。虽然参赛者多达数万人，总决赛名额却很少\footnote{总决赛名额每年不同；2017 年共有 133 个名额。}，因此在一些赛区，仅仅晋级总决赛就已是重大成就。
+
+每场 ICPC 比赛持续五小时，队伍需要解决约十道算法题。只有高效通过全部测试数据的解答才会被接受。比赛期间，选手可以查看其他队伍的结果；但最后一小时封榜，无法看到最新提交的评测结果。
+
+ICPC 可能涉及的主题不像 IOI 那样有明确规定。可以确定的是，ICPC 要求更广泛的知识，尤其需要更强的数学能力。
+
+\subsubsection{在线竞赛}
+
+还有许多面向所有人的在线竞赛。目前最活跃的竞赛网站是 Codeforces，基本每周都会举办比赛。Codeforces 将参赛者分为两个组别：初学者参加 Div2，经验更丰富的程序员参加 Div1。其他竞赛网站包括 AtCoder、CS Academy、HackerRank 和 Topcoder。
+
+一些公司会举办设有线下决赛的在线竞赛，例如 Facebook Hacker Cup、Google Code Jam 和 Yandex.Algorithm。当然，公司也会借助这些竞赛招聘人才；在比赛中取得好成绩是证明能力的好方法。
+
+\subsubsection{书籍}
+
+除本书之外，已有一些专注于算法竞赛和算法问题求解的书籍：
+
+\begin{itemize}
+\item S. S. Skiena、M. A. Revilla：《编程挑战：程序设计竞赛训练手册》\cite{ski03}
+\item S. Halim、F. Halim：《算法竞赛 3：程序设计竞赛的新下界》\cite{hal13}
+\item K. Diks 等：《寻找挑战？华沙大学程序设计竞赛终极题集》\cite{dik12}
+\end{itemize}
+
+前两本书面向初学者，最后一本包含高级内容。
+
+当然，通用算法书籍也适合竞赛程序员。较为流行的书籍包括：
+
+\begin{itemize}
+\item T. H. Cormen、C. E. Leiserson、R. L. Rivest、C. Stein：《算法导论》\cite{cor09}
+\item J. Kleinberg、É. Tardos：《算法设计》\cite{kle05}
+\item S. S. Skiena：《算法设计手册》\cite{ski08}
+\end{itemize}

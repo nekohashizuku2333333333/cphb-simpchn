@@ -1,0 +1,1000 @@
+\chapter{树上查询}
+
+\index{tree query}
+
+本章讨论处理有根树中子树与路径查询的技术。例如，这类查询包括：
+
+\begin{itemize}
+\item 一个结点的第 $k$ 个祖先是谁？
+\item 一个结点的子树中所有结点的值之和是多少？
+\item 两个结点之间路径上所有结点的值之和是多少？
+\item 两个结点的最近公共祖先是谁？
+\end{itemize}
+
+\section{寻找祖先}
+
+\index{ancestor}
+
+在有根树中，从结点 $x$ 向上移动 $k$ 层所到达的结点，称为 $x$ 的第 $k$ 个\key{祖先}。用 $\texttt{ancestor}(x,k)$ 表示结点 $x$ 的第 $k$ 个祖先（如果不存在这样的祖先，则值为 $0$）。例如，在下图中，$\texttt{ancestor}(2,1)=1$，且 $\texttt{ancestor}(8,2)=4$。
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$2$};
+\node[draw, circle] (3) at (-2,1) {$4$};
+\node[draw, circle] (4) at (0,1) {$5$};
+\node[draw, circle] (5) at (2,-1) {$6$};
+\node[draw, circle] (6) at (-3,-1) {$3$};
+\node[draw, circle] (7) at (-1,-1) {$7$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (8) edge [bend left] (3);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend right] (1);
+\end{tikzpicture}
+\end{center}
+
+计算 $\texttt{ancestor}(x,k)$ 的一种简单方法是在树中连续向上移动 $k$ 次。然而，这种方法的时间复杂度为 $O(k)$，可能很慢，因为一棵有 $n$ 个结点的树可能包含一条由 $n$ 个结点组成的链。
+
+幸运的是，使用与第 16.3 节类似的技术，在预处理之后，可以在 $O(\log k)$ 时间内高效计算任意 $\texttt{ancestor}(x,k)$。其思想是预先计算所有满足 $k \le n$ 且 $k$ 为 2 的幂的 $\texttt{ancestor}(x,k)$。例如，上图对应的值如下：
+
+\begin{center}
+\begin{tabular}{r|rrrrrrrrr}
+$x$ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\
+\hline
+$\texttt{ancestor}(x,1)$ & 0 & 1 & 4 & 1 & 1 & 2 & 4 & 7 \\
+$\texttt{ancestor}(x,2)$ & 0 & 0 & 1 & 0 & 0 & 1 & 1 & 4 \\
+$\texttt{ancestor}(x,4)$ & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+$\cdots$ \\
+\end{tabular}
+\end{center}
+
+预处理需要 $O(n \log n)$ 时间，因为每个结点都要计算 $O(\log n)$ 个值。之后，把 $k$ 表示成若干个 2 的幂之和，就能在 $O(\log k)$ 时间内计算任意 $\texttt{ancestor}(x,k)$。
+
+\section{子树与路径}
+
+\index{tree traversal array}
+
+\key{树遍历数组}按照从根结点开始进行深度优先搜索时的访问顺序，存放有根树中的各个结点。例如，在树
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (-3,1) {$2$};
+\node[draw, circle] (3) at (-1,1) {$3$};
+\node[draw, circle] (4) at (1,1) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (-3,-1) {$6$};
+\node[draw, circle] (7) at (-0.5,-1) {$7$};
+\node[draw, circle] (8) at (1,-1) {$8$};
+\node[draw, circle] (9) at (2.5,-1) {$9$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (6);
+\path[draw,thick,-] (4) -- (7);
+\path[draw,thick,-] (4) -- (8);
+\path[draw,thick,-] (4) -- (9);
+\end{tikzpicture}
+\end{center}
+中，深度优先搜索按如下方式进行：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (-3,1) {$2$};
+\node[draw, circle] (3) at (-1,1) {$3$};
+\node[draw, circle] (4) at (1,1) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (-3,-1) {$6$};
+\node[draw, circle] (7) at (-0.5,-1) {$7$};
+\node[draw, circle] (8) at (1,-1) {$8$};
+\node[draw, circle] (9) at (2.5,-1) {$9$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (6);
+\path[draw,thick,-] (4) -- (7);
+\path[draw,thick,-] (4) -- (8);
+\path[draw,thick,-] (4) -- (9);
+
+
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend right=15] (6);
+\path[draw=red,thick,->,line width=2pt] (6) edge [bend right=15] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend right=15] (1);
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend right=15] (1);
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (4);
+\path[draw=red,thick,->,line width=2pt] (4) edge [bend right=15] (7);
+\path[draw=red,thick,->,line width=2pt] (7) edge [bend right=15] (4);
+\path[draw=red,thick,->,line width=2pt] (4) edge [bend right=15] (8);
+\path[draw=red,thick,->,line width=2pt] (8) edge [bend right=15] (4);
+\path[draw=red,thick,->,line width=2pt] (4) edge [bend right=15] (9);
+\path[draw=red,thick,->,line width=2pt] (9) edge [bend right=15] (4);
+\path[draw=red,thick,->,line width=2pt] (4) edge [bend right=15] (1);
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (5);
+\path[draw=red,thick,->,line width=2pt] (5) edge [bend right=15] (1);
+
+\end{tikzpicture}
+\end{center}
+因此，对应的树遍历数组如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (9,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+% 
+% \footnotesize
+% \node at (0.5,1.4) {$1$};
+% \node at (1.5,1.4) {$2$};
+% \node at (2.5,1.4) {$3$};
+% \node at (3.5,1.4) {$4$};
+% \node at (4.5,1.4) {$5$};
+% \node at (5.5,1.4) {$6$};
+% \node at (6.5,1.4) {$7$};
+% \node at (7.5,1.4) {$8$};
+% \node at (8.5,1.4) {$9$};
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{子树查询}
+
+树中的每棵子树都对应树遍历数组中的一个子数组，并且该子数组的第一个元素就是子树的根结点。例如，下图标出的子数组包含结点 $4$ 的子树中的所有结点：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (4,0) rectangle (8,1);
+\draw (0,0) grid (9,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+% 
+% \footnotesize
+% \node at (0.5,1.4) {$1$};
+% \node at (1.5,1.4) {$2$};
+% \node at (2.5,1.4) {$3$};
+% \node at (3.5,1.4) {$4$};
+% \node at (4.5,1.4) {$5$};
+% \node at (5.5,1.4) {$6$};
+% \node at (6.5,1.4) {$7$};
+% \node at (7.5,1.4) {$8$};
+% \node at (8.5,1.4) {$9$};
+\end{tikzpicture}
+\end{center}
+利用这一性质，可以高效处理与子树有关的查询。例如，考虑这样一个问题：每个结点都有一个值，需要支持以下查询：
+\begin{itemize}
+\item 更新一个结点的值；
+\item 计算一个结点的子树中所有结点的值之和。
+\end{itemize}
+
+考虑下图，其中蓝色数字表示结点的值。例如，结点 $4$ 的子树的值之和为 $3+4+3+1=11$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (-3,1) {$2$};
+\node[draw, circle] (3) at (-1,1) {$3$};
+\node[draw, circle] (4) at (1,1) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (-3,-1) {$6$};
+\node[draw, circle] (7) at (-0.5,-1) {$7$};
+\node[draw, circle] (8) at (1,-1) {$8$};
+\node[draw, circle] (9) at (2.5,-1) {$9$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (6);
+\path[draw,thick,-] (4) -- (7);
+\path[draw,thick,-] (4) -- (8);
+\path[draw,thick,-] (4) -- (9);
+
+\node[color=blue] at (0,3+0.65) {2};
+\node[color=blue] at (-3-0.65,1) {3};
+\node[color=blue] at (-1-0.65,1) {5};
+\node[color=blue] at (1+0.65,1) {3};
+\node[color=blue] at (3+0.65,1) {1};
+\node[color=blue] at (-3,-1-0.65) {4};
+\node[color=blue] at (-0.5,-1-0.65) {4};
+\node[color=blue] at (1,-1-0.65) {3};
+\node[color=blue] at (2.5,-1-0.65) {1};
+\end{tikzpicture}
+\end{center}
+
+其思想是构造一个树的遍历数组，为每个结点保存三个值：结点编号、子树大小和结点值。例如，上述树对应的数组如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,1) grid (9,-2);
+
+\node[left] at (-1,0.5) {node id};
+\node[left] at (-1,-0.5) {subtree size};
+\node[left] at (-1,-1.5) {node value};
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+
+\node at (0.5,-0.5) {$9$};
+\node at (1.5,-0.5) {$2$};
+\node at (2.5,-0.5) {$1$};
+\node at (3.5,-0.5) {$1$};
+\node at (4.5,-0.5) {$4$};
+\node at (5.5,-0.5) {$1$};
+\node at (6.5,-0.5) {$1$};
+\node at (7.5,-0.5) {$1$};
+\node at (8.5,-0.5) {$1$};
+
+\node at (0.5,-1.5) {$2$};
+\node at (1.5,-1.5) {$3$};
+\node at (2.5,-1.5) {$4$};
+\node at (3.5,-1.5) {$5$};
+\node at (4.5,-1.5) {$3$};
+\node at (5.5,-1.5) {$4$};
+\node at (6.5,-1.5) {$3$};
+\node at (7.5,-1.5) {$1$};
+\node at (8.5,-1.5) {$1$};
+% 
+% \footnotesize
+% \node at (0.5,1.4) {$1$};
+% \node at (1.5,1.4) {$2$};
+% \node at (2.5,1.4) {$3$};
+% \node at (3.5,1.4) {$4$};
+% \node at (4.5,1.4) {$5$};
+% \node at (5.5,1.4) {$6$};
+% \node at (6.5,1.4) {$7$};
+% \node at (7.5,1.4) {$8$};
+% \node at (8.5,1.4) {$9$};
+\end{tikzpicture}
+\end{center}
+
+利用该数组，先求出子树大小，再取出对应结点的值，就能计算任意子树中所有结点的值之和。例如，可以按下图找到结点 $4$ 的子树中各结点的值：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (4,1) rectangle (5,0);
+\fill[color=lightgray] (4,0) rectangle (5,-1);
+\fill[color=lightgray] (4,-1) rectangle (8,-2);
+\draw (0,1) grid (9,-2);
+
+\node[left] at (-1,0.5) {结点编号};
+\node[left] at (-1,-0.5) {子树大小};
+\node[left] at (-1,-1.5) {结点值};
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+
+\node at (0.5,-0.5) {$9$};
+\node at (1.5,-0.5) {$2$};
+\node at (2.5,-0.5) {$1$};
+\node at (3.5,-0.5) {$1$};
+\node at (4.5,-0.5) {$4$};
+\node at (5.5,-0.5) {$1$};
+\node at (6.5,-0.5) {$1$};
+\node at (7.5,-0.5) {$1$};
+\node at (8.5,-0.5) {$1$};
+
+\node at (0.5,-1.5) {$2$};
+\node at (1.5,-1.5) {$3$};
+\node at (2.5,-1.5) {$4$};
+\node at (3.5,-1.5) {$5$};
+\node at (4.5,-1.5) {$3$};
+\node at (5.5,-1.5) {$4$};
+\node at (6.5,-1.5) {$3$};
+\node at (7.5,-1.5) {$1$};
+\node at (8.5,-1.5) {$1$};
+% 
+% \footnotesize
+% \node at (0.5,1.4) {$1$};
+% \node at (1.5,1.4) {$2$};
+% \node at (2.5,1.4) {$3$};
+% \node at (3.5,1.4) {$4$};
+% \node at (4.5,1.4) {$5$};
+% \node at (5.5,1.4) {$6$};
+% \node at (6.5,1.4) {$7$};
+% \node at (7.5,1.4) {$8$};
+% \node at (8.5,1.4) {$9$};
+\end{tikzpicture}
+\end{center}
+
+为了高效回答查询，只需把各结点的值存入树状数组或线段树。这样，更新一个值与计算区间和都能在 $O(\log n)$ 时间内完成。
+
+\subsubsection{路径查询}
+
+借助树遍历数组，还可以高效计算从根结点到树中任意结点的路径上的值之和。考虑需要支持以下查询的问题：
+\begin{itemize}
+\item 修改一个结点的值；
+\item 计算从根到某个结点的路径上的值之和。
+\end{itemize}
+
+例如，在下图中，从根结点到结点 7 的路径上的值之和为 $4+5+5=14$：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (-3,1) {$2$};
+\node[draw, circle] (3) at (-1,1) {$3$};
+\node[draw, circle] (4) at (1,1) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (-3,-1) {$6$};
+\node[draw, circle] (7) at (-0.5,-1) {$7$};
+\node[draw, circle] (8) at (1,-1) {$8$};
+\node[draw, circle] (9) at (2.5,-1) {$9$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (6);
+\path[draw,thick,-] (4) -- (7);
+\path[draw,thick,-] (4) -- (8);
+\path[draw,thick,-] (4) -- (9);
+
+\node[color=blue] at (0,3+0.65) {4};
+\node[color=blue] at (-3-0.65,1) {5};
+\node[color=blue] at (-1-0.65,1) {3};
+\node[color=blue] at (1+0.65,1) {5};
+\node[color=blue] at (3+0.65,1) {2};
+\node[color=blue] at (-3,-1-0.65) {3};
+\node[color=blue] at (-0.5,-1-0.65) {5};
+\node[color=blue] at (1,-1-0.65) {3};
+\node[color=blue] at (2.5,-1-0.65) {1};
+\end{tikzpicture}
+\end{center}
+
+可以采用与前面类似的方法解决该问题，不过现在数组最后一行的每个值表示从根到对应结点的路径和。例如，上图对应的数组如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,1) grid (9,-2);
+
+\node[left] at (-1,0.5) {结点编号};
+\node[left] at (-1,-0.5) {子树大小};
+\node[left] at (-1,-1.5) {路径和};
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+
+\node at (0.5,-0.5) {$9$};
+\node at (1.5,-0.5) {$2$};
+\node at (2.5,-0.5) {$1$};
+\node at (3.5,-0.5) {$1$};
+\node at (4.5,-0.5) {$4$};
+\node at (5.5,-0.5) {$1$};
+\node at (6.5,-0.5) {$1$};
+\node at (7.5,-0.5) {$1$};
+\node at (8.5,-0.5) {$1$};
+
+\node at (0.5,-1.5) {$4$};
+\node at (1.5,-1.5) {$9$};
+\node at (2.5,-1.5) {$12$};
+\node at (3.5,-1.5) {$7$};
+\node at (4.5,-1.5) {$9$};
+\node at (5.5,-1.5) {$14$};
+\node at (6.5,-1.5) {$12$};
+\node at (7.5,-1.5) {$10$};
+\node at (8.5,-1.5) {$6$};
+\end{tikzpicture}
+\end{center}
+
+当一个结点的值增加 $x$ 时，其子树中所有结点对应的路径和都会增加 $x$。例如，如果结点 4 的值增加 1，数组将变为：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (4,-1) rectangle (8,-2);
+\draw (0,1) grid (9,-2);
+
+\node[left] at (-1,0.5) {结点编号};
+\node[left] at (-1,-0.5) {子树大小};
+\node[left] at (-1,-1.5) {路径和};
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$6$};
+\node at (3.5,0.5) {$3$};
+\node at (4.5,0.5) {$4$};
+\node at (5.5,0.5) {$7$};
+\node at (6.5,0.5) {$8$};
+\node at (7.5,0.5) {$9$};
+\node at (8.5,0.5) {$5$};
+
+\node at (0.5,-0.5) {$9$};
+\node at (1.5,-0.5) {$2$};
+\node at (2.5,-0.5) {$1$};
+\node at (3.5,-0.5) {$1$};
+\node at (4.5,-0.5) {$4$};
+\node at (5.5,-0.5) {$1$};
+\node at (6.5,-0.5) {$1$};
+\node at (7.5,-0.5) {$1$};
+\node at (8.5,-0.5) {$1$};
+
+\node at (0.5,-1.5) {$4$};
+\node at (1.5,-1.5) {$9$};
+\node at (2.5,-1.5) {$12$};
+\node at (3.5,-1.5) {$7$};
+\node at (4.5,-1.5) {$10$};
+\node at (5.5,-1.5) {$15$};
+\node at (6.5,-1.5) {$13$};
+\node at (7.5,-1.5) {$11$};
+\node at (8.5,-1.5) {$6$};
+\end{tikzpicture}
+\end{center}
+
+因此，为了支持这两种操作，需要能够把一个区间内的所有值同时增加，并查询某个单点的值。使用树状数组或线段树（参见第 9.4 节），可以在 $O(\log n)$ 时间内完成这些操作。
+
+\section{最近公共祖先}
+
+\index{lowest common ancestor}
+
+有根树中两个结点的\key{最近公共祖先}，是其子树同时包含这两个结点的最深结点。一个典型问题是高效处理求两个结点最近公共祖先的查询。
+
+例如，在下图中，结点 5 和结点 8 的最近公共祖先是结点 2：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle, fill=lightgray] (6) at (-3,-1) {$5$};
+\node[draw, circle] (7) at (-1,-1) {$6$};
+\node[draw, circle, fill=lightgray] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (6) edge [bend left] (3);
+\path[draw=red,thick,->,line width=2pt] (8) edge [bend right=40] (3);
+\end{tikzpicture}
+\end{center}
+
+下面讨论两种高效求取两个结点最近公共祖先的技术。
+
+\subsubsection{方法一}
+
+一种解法利用了能够高效求出树中任意结点第 $k$ 个祖先这一事实。借助这一操作，可以把寻找最近公共祖先分成两个阶段。
+
+使用两个指针，初始时分别指向待求最近公共祖先的两个结点。首先把其中一个指针向上移动，使两个指针所指结点处于同一深度。
+
+在上述示例中，把第二个指针向上移动一层，使其指向结点 6；此时它与结点 5 处于同一深度：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle,fill=lightgray] (6) at (-3,-1) {$5$};
+\node[draw, circle,fill=lightgray] (7) at (-1,-1) {$6$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (8) edge [bend right] (7);
+\end{tikzpicture}
+\end{center}
+
+随后，求出需要把两个指针同时向上移动的最少步数，使它们指向同一结点。最终所指的结点就是最近公共祖先。
+
+在该示例中，只需把两个指针同时向上移动一步到结点 2；结点 2 即为最近公共祖先：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle,fill=lightgray] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle] (6) at (-3,-1) {$5$};
+\node[draw, circle] (7) at (-1,-1) {$6$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (6) edge [bend left] (3);
+\path[draw=red,thick,->,line width=2pt] (7) edge [bend right] (3);
+\end{tikzpicture}
+\end{center}
+
+利用预处理信息，算法的两个阶段都能在 $O(\log n)$ 时间内完成，因此可以在 $O(\log n)$ 时间内求出任意两个结点的最近公共祖先。
+
+\subsubsection{方法二}
+
+另一种解法基于树遍历数组\footnote{这一最近公共祖先算法发表于 \cite{ben00}。该技术有时称为\index{Euler tour technique}\key{欧拉序技术} \cite{tar84}。}。其思想仍然是使用深度优先搜索遍历结点：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle] (6) at (-3,-1) {$5$};
+\node[draw, circle] (7) at (-1,-1) {$6$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend right=15] (6);
+\path[draw=red,thick,->,line width=2pt] (6) edge [bend right=15] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend right=15] (7);
+\path[draw=red,thick,->,line width=2pt] (7) edge [bend right=15] (8);
+\path[draw=red,thick,->,line width=2pt] (8) edge [bend right=15] (7);
+\path[draw=red,thick,->,line width=2pt] (7) edge [bend right=15] (3);
+\path[draw=red,thick,->,line width=2pt] (3) edge [bend right=15] (1);
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (4);
+\path[draw=red,thick,->,line width=2pt] (4) edge [bend right=15] (1);
+\path[draw=red,thick,->,line width=2pt] (1) edge [bend right=15] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend right=15] (5);
+\path[draw=red,thick,->,line width=2pt] (5) edge [bend right=15] (2);
+\path[draw=red,thick,->,line width=2pt] (2) edge [bend right=15] (1);
+\end{tikzpicture}
+\end{center}
+
+不过，这里使用的树遍历数组与前文不同：深度优先搜索每次经过一个结点时，都把它加入数组，而不只是第一次访问时加入。因此，一个有 $k$ 个子结点的结点会在数组中出现 $k+1$ 次，数组中总共有 $2n-1$ 个结点。
+
+数组为每个位置存储两个值：结点编号，以及该结点在树中的深度。上图对应的数组如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+
+\node[left] at (-1,1.5) {结点编号};
+\node[left] at (-1,0.5) {深度};
+
+\draw (0,1) grid (15,2);
+\node at (0.5,1.5) {$1$};
+\node at (1.5,1.5) {$2$};
+\node at (2.5,1.5) {$5$};
+\node at (3.5,1.5) {$2$};
+\node at (4.5,1.5) {$6$};
+\node at (5.5,1.5) {$8$};
+\node at (6.5,1.5) {$6$};
+\node at (7.5,1.5) {$2$};
+\node at (8.5,1.5) {$1$};
+\node at (9.5,1.5) {$3$};
+\node at (10.5,1.5) {$1$};
+\node at (11.5,1.5) {$4$};
+\node at (12.5,1.5) {$7$};
+\node at (13.5,1.5) {$4$};
+\node at (14.5,1.5) {$1$};
+
+\draw (0,0) grid (15,1);
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$3$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$3$};
+\node at (7.5,0.5) {$2$};
+\node at (8.5,0.5) {$1$};
+\node at (9.5,0.5) {$2$};
+\node at (10.5,0.5) {$1$};
+\node at (11.5,0.5) {$2$};
+\node at (12.5,0.5) {$3$};
+\node at (13.5,0.5) {$2$};
+\node at (14.5,0.5) {$1$};
+
+\footnotesize
+\node at (0.5,2.5) {$0$};
+\node at (1.5,2.5) {$1$};
+\node at (2.5,2.5) {$2$};
+\node at (3.5,2.5) {$3$};
+\node at (4.5,2.5) {$4$};
+\node at (5.5,2.5) {$5$};
+\node at (6.5,2.5) {$6$};
+\node at (7.5,2.5) {$7$};
+\node at (8.5,2.5) {$8$};
+\node at (9.5,2.5) {$9$};
+\node at (10.5,2.5) {$10$};
+\node at (11.5,2.5) {$11$};
+\node at (12.5,2.5) {$12$};
+\node at (13.5,2.5) {$13$};
+\node at (14.5,2.5) {$14$};
+\end{tikzpicture}
+\end{center}
+
+现在，只需在数组中结点 $a$ 与结点 $b$ 两次出现的位置之间，找出深度\emph{最小}的结点，就能得到它们的最近公共祖先。例如，可以按下图求出结点 $5$ 和结点 $8$ 的最近公共祖先：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+
+\node[left] at (-1,1.5) {结点编号};
+\node[left] at (-1,0.5) {深度};
+
+\fill[color=lightgray] (2,1) rectangle (3,2);
+\fill[color=lightgray] (5,1) rectangle (6,2);
+\fill[color=lightgray] (2,0) rectangle (6,1);
+
+\node at (3.5,-0.5) {$\uparrow$};
+
+\draw (0,1) grid (15,2);
+\node at (0.5,1.5) {$1$};
+\node at (1.5,1.5) {$2$};
+\node at (2.5,1.5) {$5$};
+\node at (3.5,1.5) {$2$};
+\node at (4.5,1.5) {$6$};
+\node at (5.5,1.5) {$8$};
+\node at (6.5,1.5) {$6$};
+\node at (7.5,1.5) {$2$};
+\node at (8.5,1.5) {$1$};
+\node at (9.5,1.5) {$3$};
+\node at (10.5,1.5) {$1$};
+\node at (11.5,1.5) {$4$};
+\node at (12.5,1.5) {$7$};
+\node at (13.5,1.5) {$4$};
+\node at (14.5,1.5) {$1$};
+
+
+\draw (0,0) grid (15,1);
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$2$};
+\node at (2.5,0.5) {$3$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$3$};
+\node at (7.5,0.5) {$2$};
+\node at (8.5,0.5) {$1$};
+\node at (9.5,0.5) {$2$};
+\node at (10.5,0.5) {$1$};
+\node at (11.5,0.5) {$2$};
+\node at (12.5,0.5) {$3$};
+\node at (13.5,0.5) {$2$};
+\node at (14.5,0.5) {$1$};
+
+\footnotesize
+\node at (0.5,2.5) {$0$};
+\node at (1.5,2.5) {$1$};
+\node at (2.5,2.5) {$2$};
+\node at (3.5,2.5) {$3$};
+\node at (4.5,2.5) {$4$};
+\node at (5.5,2.5) {$5$};
+\node at (6.5,2.5) {$6$};
+\node at (7.5,2.5) {$7$};
+\node at (8.5,2.5) {$8$};
+\node at (9.5,2.5) {$9$};
+\node at (10.5,2.5) {$10$};
+\node at (11.5,2.5) {$11$};
+\node at (12.5,2.5) {$12$};
+\node at (13.5,2.5) {$13$};
+\node at (14.5,2.5) {$14$};
+\end{tikzpicture}
+\end{center}
+
+结点 5 位于位置 2，结点 8 位于位置 5；在位置 $2 \ldots 5$ 之间，深度最小的是位置 3 上、深度为 2 的结点 2。因此，结点 5 和结点 8 的最近公共祖先是结点 2。
+
+由此可见，求两个结点的最近公共祖先可以归约为区间最小值查询。由于数组是静态的，在进行 $O(n \log n)$ 的预处理后，每次查询可以在 $O(1)$ 时间内完成。
+
+\subsubsection{结点距离}
+
+结点 $a$ 与结点 $b$ 之间的距离，等于从 $a$ 到 $b$ 的路径长度。计算结点间距离的问题可以归约为寻找它们的最近公共祖先。
+
+首先任选一个结点作为树根。随后，可以用以下公式计算结点 $a$ 与结点 $b$ 之间的距离：
+\[\texttt{depth}(a)+\texttt{depth}(b)-2 \cdot \texttt{depth}(c),\]
+其中 $c$ 是 $a$ 与 $b$ 的最近公共祖先，$\texttt{depth}(s)$ 表示结点 $s$ 的深度。例如，考虑结点 5 与结点 8 之间的距离：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle] (6) at (-3,-1) {$5$};
+\node[draw, circle] (7) at (-1,-1) {$6$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\path[draw=red,thick,-,line width=2pt] (8) -- node[font=\small] {} (7);
+\path[draw=red,thick,-,line width=2pt] (7) -- node[font=\small] {} (3);
+\path[draw=red,thick,-,line width=2pt] (6) -- node[font=\small] {} (3);
+\end{tikzpicture}
+\end{center}
+
+结点 5 和结点 8 的最近公共祖先是结点 2。各结点的深度为 $\texttt{depth}(5)=3$、$\texttt{depth}(8)=4$、$\texttt{depth}(2)=2$，因此结点 5 与结点 8 之间的距离为 $3+4-2\cdot2=3$。
+
+\section{离线算法}
+
+到目前为止，我们讨论的都是处理树上查询的\emph{在线}算法。这类算法逐个处理查询，并且必须在接收下一个查询之前回答当前查询。
+
+然而，许多问题并不要求在线处理。本节重点讨论\emph{离线}算法：算法一次获得一组查询，并可按任意顺序回答。与在线算法相比，离线算法通常更容易设计。
+
+\subsubsection{合并数据结构}
+
+构造离线算法的一种方法是对树进行深度优先遍历，并在各结点维护数据结构。对于每个结点 $s$，根据其子结点的数据结构建立 $\texttt{d}[s]$，随后使用这一数据结构处理所有与 $s$ 有关的查询。
+
+例如，考虑如下问题：给定一棵每个结点都有某个值的树，需要处理形如“计算结点 $s$ 的子树中值为 $x$ 的结点个数”的查询。在下图中，结点 $4$ 的子树包含两个值为 3 的结点。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (-3,1) {$2$};
+\node[draw, circle] (3) at (-1,1) {$3$};
+\node[draw, circle] (4) at (1,1) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (-3,-1) {$6$};
+\node[draw, circle] (7) at (-0.5,-1) {$7$};
+\node[draw, circle] (8) at (1,-1) {$8$};
+\node[draw, circle] (9) at (2.5,-1) {$9$};
+
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (1) -- (5);
+\path[draw,thick,-] (2) -- (6);
+\path[draw,thick,-] (4) -- (7);
+\path[draw,thick,-] (4) -- (8);
+\path[draw,thick,-] (4) -- (9);
+
+\node[color=blue] at (0,3+0.65) {2};
+\node[color=blue] at (-3-0.65,1) {3};
+\node[color=blue] at (-1-0.65,1) {5};
+\node[color=blue] at (1+0.65,1) {3};
+\node[color=blue] at (3+0.65,1) {1};
+\node[color=blue] at (-3,-1-0.65) {4};
+\node[color=blue] at (-0.5,-1-0.65) {4};
+\node[color=blue] at (1,-1-0.65) {3};
+\node[color=blue] at (2.5,-1-0.65) {1};
+\end{tikzpicture}
+\end{center}
+
+在这个问题中，可以使用映射（map）结构回答查询。例如，结点 4 及其各子结点对应的映射如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+
+\node[draw, rectangle] (a) at (4,5.5)
+{
+\footnotesize
+\begin{tabular}{rrr}
+4 \\
+\hline
+1 \\
+\end{tabular}};
+
+\node[draw, rectangle] (b) at (8,5.5)
+{
+\footnotesize
+\begin{tabular}{rrr}
+3 \\
+\hline
+1 \\
+\end{tabular}};
+
+
+\node[draw, rectangle] (c) at (12,5.5)
+{
+\footnotesize
+\begin{tabular}{rr}
+1 \\
+\hline
+1 \\
+\end{tabular}};
+
+\node[draw, rectangle] (d) at (8,8.5)
+{
+\footnotesize
+\begin{tabular}{rrr}
+1 & 3 & 4 \\
+\hline
+1 & 2 & 1 \\
+\end{tabular}};
+\path[draw,thick,-] (a) -- (d);
+\path[draw,thick,-] (b) -- (d);
+\path[draw,thick,-] (c) -- (d);
+\end{tikzpicture}
+\end{center}
+
+如果为每个结点建立这样的数据结构，就能轻松处理所有查询，因为在建立某结点的数据结构后，可以立即处理与该结点有关的全部查询。例如，上面结点 4 的映射表明，其子树中有两个值为 3 的结点。
+
+不过，从头建立所有数据结构会过于缓慢。作为替代，对于每个结点 $s$，先建立只包含 $s$ 自身值的初始数据结构 $\texttt{d}[s]$。随后遍历 $s$ 的所有子结点，把 $\texttt{d}[s]$ 与每个子结点 $u$ 的数据结构 $\texttt{d}[u]$ 依次\emph{合并}。
+
+例如，在上图中，结点 $4$ 的映射由以下映射合并而成：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+
+\node[draw, rectangle] (a) at (4,5.5)
+{
+\footnotesize
+\begin{tabular}{rrr}
+4 \\
+\hline
+1 \\
+\end{tabular}};
+
+\node[draw, rectangle] (b) at (7,5.5)
+{
+\footnotesize
+\begin{tabular}{rrr}
+3 \\
+\hline
+1 \\
+\end{tabular}};
+
+\node[draw, rectangle] (c) at (10,5.5)
+{
+\footnotesize
+\begin{tabular}{rr}
+1 \\
+\hline
+1 \\
+\end{tabular}};
+
+\node[draw, rectangle] (d) at (1,5.5)
+{
+\footnotesize
+\begin{tabular}{rr}
+3 \\
+\hline
+1 \\
+\end{tabular}};
+
+\end{tikzpicture}
+\end{center}
+
+其中第一个映射是结点 4 的初始数据结构，另外三个映射分别对应结点 7、8、9。
+
+可以按如下方式在结点 $s$ 处完成合并：遍历 $s$ 的各个子结点，对每个子结点 $u$ 合并 $\texttt{d}[s]$ 与 $\texttt{d}[u]$。总是把 $\texttt{d}[u]$ 的内容复制到 $\texttt{d}[s]$；但在此之前，如果 $\texttt{d}[s]$ 小于 $\texttt{d}[u]$，就先\emph{交换}两者的内容。这样，在整次树遍历中，每个值只会被复制 $O(\log n)$ 次，从而保证算法高效。
+
+要高效交换两个数据结构 $a$ 与 $b$ 的内容，只需使用以下代码：
+\begin{lstlisting}
+swap(a,b);
+\end{lstlisting}
+当 $a$ 和 $b$ 是 C++ 标准库数据结构时，可以保证上述代码在常数时间内运行。
+
+\subsubsection{最近公共祖先}
+
+还有一种离线算法可用于处理一组最近公共祖先查询\footnote{该算法由 R. E. Tarjan 于 1979 年发表 \cite{tar79}。}。该算法基于并查集（参见第 15.2 节），其优点是比本章前面讨论的算法更容易实现。
+
+算法的输入是一组结点对，任务是为每一对结点确定最近公共祖先。算法对树进行深度优先遍历，并维护若干互不相交的结点集合。初始时，每个结点各自属于一个集合；对于每个集合，还要保存其中在树上位置最高的结点。
+
+当算法访问结点 $x$ 时，会遍历所有需要与 $x$ 一起查询最近公共祖先的结点 $y$。如果 $y$ 已经被访问，则 $x$ 与 $y$ 的最近公共祖先就是 $y$ 所在集合中位置最高的结点。处理完结点 $x$ 后，算法把 $x$ 所在集合与其父结点所在集合合并。
+
+例如，假设要在下图中求结点对 $(5,8)$ 与 $(2,7)$ 的最近公共祖先：
+\begin{center}
+\begin{tikzpicture}[scale=0.85]
+\node[draw, circle] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle] (6) at (-3,-1) {$5$};
+\node[draw, circle] (7) at (-1,-1) {$6$};
+\node[draw, circle] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+\end{tikzpicture}
+\end{center}
+
+在下面的图中，灰色结点表示已访问结点，虚线框中的结点属于同一集合。当算法访问结点 8 时，会发现结点 5 已被访问，且其所在集合中位置最高的结点为 2。因此，结点 5 和结点 8 的最近公共祖先是 2：
+\begin{center}
+\begin{tikzpicture}[scale=0.85]
+\node[draw, circle, fill=lightgray] (1) at (0,3) {$1$};
+\node[draw, circle] (2) at (2,1) {$4$};
+\node[draw, circle, fill=lightgray] (3) at (-2,1) {$2$};
+\node[draw, circle] (4) at (0,1) {$3$};
+\node[draw, circle] (5) at (2,-1) {$7$};
+\node[draw, circle, fill=lightgray] (6) at (-3,-1) {$5$};
+\node[draw, circle, fill=lightgray] (7) at (-1,-1) {$6$};
+\node[draw, circle, fill=gray] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\draw [red,thick,dashed,line width=2pt,rotate around={-28:(-2,0)}] (-2.9,1.5) rectangle (-1.9,-2);
+
+
+\draw [red,thick,dashed,line width=2pt] (-1.5,-0.5) rectangle (-0.5,-1.5);
+\draw [red,thick,dashed,line width=2pt] (-1.5,-2.5) rectangle (-0.5,-3.5);
+
+\draw [red,thick,dashed,line width=2pt] (0.5,3.5) rectangle (-0.5,2.5);
+\draw [red,thick,dashed,line width=2pt] (0.5,1.5) rectangle (-0.5,0.5);
+\draw [red,thick,dashed,line width=2pt] (2.5,1.5) rectangle (1.5,0.5);
+\draw [red,thick,dashed,line width=2pt] (2.5,-0.5) rectangle (1.5,-1.5);
+\end{tikzpicture}
+\end{center}
+
+之后，当算法访问结点 7 时，可以确定结点 2 与结点 7 的最近公共祖先是 1：
+\begin{center}
+\begin{tikzpicture}[scale=0.85]
+\node[draw, circle, fill=lightgray] (1) at (0,3) {$1$};
+\node[draw, circle, fill=lightgray] (2) at (2,1) {$4$};
+\node[draw, circle, fill=lightgray] (3) at (-2,1) {$2$};
+\node[draw, circle, fill=lightgray] (4) at (0,1) {$3$};
+\node[draw, circle, fill=gray] (5) at (2,-1) {$7$};
+\node[draw, circle, fill=lightgray] (6) at (-3,-1) {$5$};
+\node[draw, circle, fill=lightgray] (7) at (-1,-1) {$6$};
+\node[draw, circle, fill=lightgray] (8) at (-1,-3) {$8$};
+\path[draw,thick,-] (1) -- (2);
+\path[draw,thick,-] (1) -- (3);
+\path[draw,thick,-] (1) -- (4);
+\path[draw,thick,-] (2) -- (5);
+\path[draw,thick,-] (3) -- (6);
+\path[draw,thick,-] (3) -- (7);
+\path[draw,thick,-] (7) -- (8);
+
+\draw [red,thick,dashed,line width=2pt] (0.5,3.5) rectangle (-3.5,-3.5);
+\draw [red,thick,dashed,line width=2pt] (2.5,1.5) rectangle (1.5,0.5);
+\draw [red,thick,dashed,line width=2pt] (2.5,-0.5) rectangle (1.5,-1.5);
+
+\end{tikzpicture}
+\end{center}

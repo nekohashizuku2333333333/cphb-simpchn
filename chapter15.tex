@@ -1,0 +1,513 @@
+\chapter{生成树}
+
+\index{spanning tree}
+
+图的一棵\key{生成树}包含图中的所有节点和部分边，并且任意两个节点之间都存在路径。和一般的树一样，生成树是连通且无环的。通常，一个图可以用多种方式构造生成树。
+
+例如，考虑下图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+它的一棵生成树如下：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+
+生成树的权值是其所有边权之和。例如，上述生成树的权值为 $3+5+9+3+2=22$。
+
+\index{minimum spanning tree}
+
+\key{最小生成树}是权值尽可能小的生成树。示例图的最小生成树权值为 20，可以构造如下：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+
+\index{maximum spanning tree}
+
+类似地，\key{最大生成树}是权值尽可能大的生成树。示例图的最大生成树权值为 32：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\end{tikzpicture}
+\end{center}
+
+一个图可能有多棵最小或最大生成树，因此这些树不一定唯一。
+
+事实证明，可以使用多种贪心方法构造最小和最大生成树。本章讨论两种按边权顺序处理图中各边的算法。我们重点寻找最小生成树；若按相反顺序处理边，同样的算法也能找到最大生成树。
+
+\section{Kruskal 算法}
+
+\index{Kruskal's algorithm}
+
+\key{Kruskal 算法}\footnote{J. B. Kruskal 于 1956 年发表了这一算法 \cite{kru56}。}开始时的生成树只包含图的节点，不含任何边。随后，算法按边权顺序遍历所有边；如果加入一条边不会形成环，就把它加入树中。
+
+算法维护树的各个连通分量。初始时，每个节点分别属于一个分量。每向树中加入一条边，就合并两个分量。最终所有节点都属于同一分量，也就找到了最小生成树。
+
+\subsubsection{示例}
+
+\begin{samepage}
+考察 Kruskal 算法如何处理下图：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+\begin{samepage}
+算法第一步按权值递增排序所有边，得到下表：
+
+\begin{tabular}{ll}
+\\
+边 & 权值 \\
+\hline
+5--6 & 2 \\
+1--2 & 3 \\
+3--6 & 3 \\
+1--5 & 5 \\
+2--3 & 5 \\
+2--5 & 6 \\
+4--6 & 7 \\
+3--4 & 9 \\
+\\
+\end{tabular}
+\end{samepage}
+
+随后，算法遍历该列表；若一条边连接两个不同分量，就将它加入树中。
+
+初始时，每个节点各自构成一个分量：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+%\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+%\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+%\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+首先加入边 5--6，它合并分量 $\{5\}$ 和 $\{6\}$，形成分量 $\{5,6\}$：
+
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+%\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+%\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+随后，以同样方式加入边 1--2、3--6 和 1--5：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+
+此时大多数分量已经合并，树中只剩两个分量：$\{1,2,3,5,6\}$ 和 $\{4\}$。
+
+列表中的下一条边是 2--3，但节点 2 和 3 已在同一分量中，因此不会加入树。出于同样原因，边 2--5 也不会加入。
+
+\begin{samepage}
+最后，将边 4--6 加入树中：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+此后图已连通，任意两节点之间都有路径，算法不会再加入新边。所得图是一棵权值为 $2+3+3+5+7=20$ 的最小生成树。
+
+\subsubsection{为什么正确？}
+
+Kruskal 算法为什么正确，是一个很好的问题。为什么这种贪心策略能够保证找到最小生成树？
+
+考察图中权值最小的边\emph{没有}包含在生成树中的情况。例如，假设前一个图的某棵生成树不包含权值最小的边 5--6。虽然不知道这棵生成树的确切结构，但它总要包含一些边。假设它如下所示：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+\path[draw,thick,-,dashed] (1) -- (2);
+\path[draw,thick,-,dashed] (2) -- (5);
+\path[draw,thick,-,dashed] (2) -- (3);
+\path[draw,thick,-,dashed] (3) -- (4);
+\path[draw,thick,-,dashed] (4) -- (6);
+\end{tikzpicture}
+\end{center}
+
+然而，上面的树不可能是该图的最小生成树。原因是，可以从树中删除一条边，并用权值最小的边 5--6 替换它，从而得到一棵权值\emph{更小}的生成树：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+
+\path[draw,thick,-,dashed] (1) -- (2);
+\path[draw,thick,-,dashed] (2) -- (5);
+\path[draw,thick,-,dashed] (3) -- (4);
+\path[draw,thick,-,dashed] (4) -- (6);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\end{tikzpicture}
+\end{center}
+
+因此，为构造最小生成树，把权值最小的边加入树中总是最优的。使用类似论证，可以证明按权值顺序加入下一条边也是最优的，依此类推。于是 Kruskal 算法是正确的，并且总能生成一棵最小生成树。
+
+\subsubsection{实现}
+
+实现 Kruskal 算法时，使用图的边列表表示十分方便。算法第一阶段在 $O(m\log m)$ 时间内对列表中的边排序。随后，第二阶段按如下方式构造最小生成树：
+
+\begin{lstlisting}
+for (...) {
+  if (!same(a,b)) unite(a,b);
+}
+\end{lstlisting}
+
+循环遍历边列表，每次处理连接两个节点 $a$、$b$ 的一条边。需要两个函数：\texttt{same} 判断 $a$ 与 $b$ 是否位于同一分量，\texttt{unite} 合并分别包含 $a$ 与 $b$ 的两个分量。
+
+问题在于如何高效实现 \texttt{same} 和 \texttt{unite}。一种方案是通过图遍历实现 \texttt{same}，检查是否能从节点 $a$ 到达节点 $b$。但这样的函数时间复杂度为 $O(n+m)$；由于图中每条边都会调用 \texttt{same}，最终算法会很慢。
+
+我们将使用并查集解决这一问题，它能在 $O(\log n)$ 时间内实现两个函数。因此，边列表排序之后，Kruskal 算法的时间复杂度为 $O(m\log n)$。
+
+\section{并查集}
+
+\index{union-find structure}
+
+\key{并查集}维护一组集合。这些集合两两不交，因此没有元素同时属于多个集合。它支持两种 $O(\log n)$ 操作：\texttt{unite} 操作合并两个集合，\texttt{find} 操作寻找包含给定元素的集合代表元\footnote{这里介绍的数据结构由 J. D. Hopcroft 和 J. D. Ullman 于 1971 年提出 \cite{hop71}。1975 年，R. E. Tarjan 研究了一种更复杂的变体 \cite{tar75}，如今许多算法教材都会介绍它。}。
+
+\subsubsection{结构}
+
+在并查集中，每个集合选取一个元素作为代表元，集合内任意其他元素都有一条链通向代表元。例如，假设集合为 $\{1,4,7\}$、$\{5\}$ 和 $\{2,3,6,8\}$：
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (0,-1) {$1$};
+\node[draw, circle] (2) at (7,0) {$2$};
+\node[draw, circle] (3) at (7,-1.5) {$3$};
+\node[draw, circle] (4) at (1,0) {$4$};
+\node[draw, circle] (5) at (4,0) {$5$};
+\node[draw, circle] (6) at (6,-2.5) {$6$};
+\node[draw, circle] (7) at (2,-1) {$7$};
+\node[draw, circle] (8) at (8,-2.5) {$8$};
+
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (7) -- (4);
+
+\path[draw,thick,->] (3) -- (2);
+\path[draw,thick,->] (6) -- (3);
+\path[draw,thick,->] (8) -- (3);
+
+\end{tikzpicture}
+\end{center}
+这些集合的代表元分别是 4、5 和 2。沿着从某元素开始的链即可找到其代表元。例如，元素 6 的代表元是 2，因为沿链 $6 \rightarrow 3 \rightarrow 2$ 可到达它。两个元素属于同一集合，当且仅当它们的代表元相同。
+
+把一个集合的代表元连接到另一个集合的代表元，就能合并两个集合。例如，集合 $\{1,4,7\}$ 和 $\{2,3,6,8\}$ 可以按如下方式合并：
+\begin{center}
+\begin{tikzpicture}
+\node[draw, circle] (1) at (2,-1) {$1$};
+\node[draw, circle] (2) at (7,0) {$2$};
+\node[draw, circle] (3) at (7,-1.5) {$3$};
+\node[draw, circle] (4) at (3,0) {$4$};
+\node[draw, circle] (6) at (6,-2.5) {$6$};
+\node[draw, circle] (7) at (4,-1) {$7$};
+\node[draw, circle] (8) at (8,-2.5) {$8$};
+
+\path[draw,thick,->] (1) -- (4);
+\path[draw,thick,->] (7) -- (4);
+
+\path[draw,thick,->] (3) -- (2);
+\path[draw,thick,->] (6) -- (3);
+\path[draw,thick,->] (8) -- (3);
+
+\path[draw,thick,->] (4) -- (2);
+\end{tikzpicture}
+\end{center}
+
+所得集合包含元素 $\{1,2,3,4,6,7,8\}$。从此以后，元素 2 是整个集合的代表元，原代表元 4 指向元素 2。
+
+并查集的效率取决于集合的合并方式。可以采用一个简单策略：始终把\emph{较小}集合的代表元连接到\emph{较大}集合的代表元（若大小相等，可以任意选择）。使用该策略，任意链的长度都是 $O(\log n)$，所以能够沿相应的链高效找到任意元素的代表元。
+
+\subsubsection{实现}
+
+并查集可以用数组实现。下面的实现中，数组 \texttt{link} 对每个元素保存链中的下一个元素；若该元素是代表元，则保存它自身。数组 \texttt{size} 对每个代表元保存相应集合的大小。
+
+初始时，每个元素分别属于一个集合：
+\begin{lstlisting}
+for (int i = 1; i <= n; i++) link[i] = i;
+for (int i = 1; i <= n; i++) size[i] = 1;
+\end{lstlisting}
+
+函数 \texttt{find} 返回元素 $x$ 的代表元。沿着从 $x$ 开始的链即可找到代表元。
+
+\begin{lstlisting}
+int find(int x) {
+    while (x != link[x]) x = link[x];
+    return x;
+}
+\end{lstlisting}
+
+函数 \texttt{same} 检查元素 $a$ 和 $b$ 是否属于同一集合。使用 \texttt{find} 即可轻松完成：
+
+\begin{lstlisting}
+bool same(int a, int b) {
+    return find(a) == find(b);
+}
+\end{lstlisting}
+
+\begin{samepage}
+函数 \texttt{unite} 合并包含元素 $a$ 和 $b$ 的集合（这两个元素必须属于不同集合）。函数先找到两个集合的代表元，再把较小集合连接到较大集合。
+
+\begin{lstlisting}
+void unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (size[a] < size[b]) swap(a,b);
+    size[a] += size[b];
+    link[b] = a;
+}
+\end{lstlisting}
+\end{samepage}
+
+假设每条链的长度都是 $O(\log n)$，函数 \texttt{find} 的时间复杂度就是 $O(\log n)$，函数 \texttt{same} 和 \texttt{unite} 也都在 $O(\log n)$ 时间内运行。\texttt{unite} 始终把较小集合连接到较大集合，从而保证每条链的长度为 $O(\log n)$。
+
+\section{Prim 算法}
+
+\index{Prim's algorithm}
+
+\key{Prim 算法}\footnote{该算法以 R. C. Prim 命名，他于 1957 年发表了这一算法 \cite{pri57}。不过，V. Jarník 早在 1930 年就发现了同一算法。}是寻找最小生成树的另一种方法。算法首先向树中加入任意节点。随后，每次选择一条权值最小、且能向树中加入一个新节点的边。最终所有节点都被加入树中，也就找到了一棵最小生成树。
+
+Prim 算法与 Dijkstra 算法相似。区别是：Dijkstra 算法总是选择一条使节点到起点距离最小的边，而 Prim 算法只选择能向树中加入一个新节点的最小权边。
+
+\subsubsection{示例}
+
+考察 Prim 算法如何处理下图：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+
+%\path[draw=red,thick,-,line width=2pt] (5) -- (6);
+\end{tikzpicture}
+\end{center}
+初始时，节点之间没有任何边：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+%\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+%\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+%\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+起始节点可以任意选择，这里选择节点 1。首先，加入由权值为 3 的边连接的节点 2：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+%\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+%\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+%\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+
+此时有两条权值为 5 的边，因此可以把节点 3 或节点 5 加入树中。这里先加入节点 3：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+%\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+%\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+%\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+
+\begin{samepage}
+不断重复这一过程，直到所有节点都加入树中：
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, circle] (1) at (1.5,2) {$1$};
+\node[draw, circle] (2) at (3,3) {$2$};
+\node[draw, circle] (3) at (5,3) {$3$};
+\node[draw, circle] (4) at (6.5,2) {$4$};
+\node[draw, circle] (5) at (3,1) {$5$};
+\node[draw, circle] (6) at (5,1) {$6$};
+\path[draw,thick,-] (1) -- node[font=\small,label=above:3] {} (2);
+\path[draw,thick,-] (2) -- node[font=\small,label=above:5] {} (3);
+%\path[draw,thick,-] (3) -- node[font=\small,label=above:9] {} (4);
+%\path[draw,thick,-] (1) -- node[font=\small,label=below:5] {} (5);
+\path[draw,thick,-] (5) -- node[font=\small,label=below:2] {} (6);
+\path[draw,thick,-] (6) -- node[font=\small,label=below:7] {} (4);
+%\path[draw,thick,-] (2) -- node[font=\small,label=left:6] {} (5);
+\path[draw,thick,-] (3) -- node[font=\small,label=left:3] {} (6);
+\end{tikzpicture}
+\end{center}
+\end{samepage}
+
+\subsubsection{实现}
+
+与 Dijkstra 算法一样，Prim 算法可以用优先队列高效实现。优先队列应包含所有能通过一条边连接到当前分量的节点，并按照相应边的权值递增排列。
+
+Prim 算法的时间复杂度是 $O(n+m\log m)$，与 Dijkstra 算法相同。实际中，Prim 和 Kruskal 算法都很高效，选择哪一个主要取决于个人偏好。不过，大多数竞赛程序员使用 Kruskal 算法。

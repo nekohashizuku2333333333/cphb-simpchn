@@ -1,0 +1,551 @@
+\chapter{摊还分析}
+
+\index{amortized analysis}
+
+通常只需考察算法的结构，例如包含哪些循环以及循环执行多少次，就很容易分析算法的时间复杂度。然而，有时直接分析并不能真实反映算法的效率。
+
+\key{摊还分析}可用于分析包含耗时不一的操作的算法。其思想是不关注单次操作，而是估计算法执行期间所有这类操作耗费的总时间。
+
+\section{双指针法}
+
+\index{two pointers method}
+
+\key{双指针法}使用两个指针遍历数组元素。两个指针都只能沿一个方向移动，从而保证算法高效运行。下面讨论两个可用双指针法解决的问题。
+
+\subsubsection{子数组和}
+
+第一个例子是：给定含有 $n$ 个正整数的数组以及目标和 $x$，找出一个元素和为 $x$ 的子数组，若不存在则报告无解。
+
+例如，数组
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+\end{tikzpicture}
+\end{center}
+包含一个元素和为 8 的子数组：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+\end{tikzpicture}
+\end{center}
+
+使用双指针法可以在 $O(n)$ 时间内解决该问题。维护两个分别指向子数组首尾元素的指针。每轮将左指针向右移动一步，同时只要所得子数组的和不超过 $x$，就继续向右移动右指针。若总和恰好为 $x$，就找到了一个解。
+
+例如，考虑下列数组与目标和 $x=8$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+\end{tikzpicture}
+\end{center}
+
+初始子数组包含 1、3 和 2，总和为 6：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (0,0) rectangle (3,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+
+\draw[thick,->] (0.5,-0.7) -- (0.5,-0.1);
+\draw[thick,->] (2.5,-0.7) -- (2.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+然后左指针向右移动一步。右指针不动，因为否则子数组和会超过 $x$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (1,0) rectangle (3,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+
+\draw[thick,->] (1.5,-0.7) -- (1.5,-0.1);
+\draw[thick,->] (2.5,-0.7) -- (2.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+左指针再次向右移动一步，这次右指针向右移动三步。子数组和为 $2+5+1=8$，因此找到了元素和为 $x$ 的子数组。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$2$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$1$};
+\node at (5.5,0.5) {$1$};
+\node at (6.5,0.5) {$2$};
+\node at (7.5,0.5) {$3$};
+
+\draw[thick,->] (2.5,-0.7) -- (2.5,-0.1);
+\draw[thick,->] (4.5,-0.7) -- (4.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+算法的运行时间取决于右指针移动的步数。虽然右指针在\emph{单轮}中可能移动很多步，没有有用的上界，但它始终只向右移动，因此整个算法中\emph{总共}只移动 $O(n)$ 步。
+
+由于左右指针在算法中都移动 $O(n)$ 步，算法的时间复杂度为 $O(n)$。
+
+\subsubsection{两数之和问题}
+
+\index{2SUM problem}
+
+另一个可以用双指针法解决的问题称为\key{两数之和问题}（2SUM）：给定含有 $n$ 个数的数组与目标和 $x$，找出两个和为 $x$ 的数组元素，若不存在则报告无解。
+
+先将数组元素按递增顺序排序，再用两个指针遍历数组。左指针从第一个元素开始，每轮向右移动一步。右指针从最后一个元素开始，不断向左移动，直到左右指针所指元素之和不超过 $x$。若总和恰好为 $x$，就找到了一个解。
+
+例如，考虑下列数组与目标和 $x=12$：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$5$};
+\node at (3.5,0.5) {$6$};
+\node at (4.5,0.5) {$7$};
+\node at (5.5,0.5) {$9$};
+\node at (6.5,0.5) {$9$};
+\node at (7.5,0.5) {$10$};
+\end{tikzpicture}
+\end{center}
+
+指针的初始位置如下。两元素之和为 $1+10=11$，小于 $x$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (0,0) rectangle (1,1);
+\fill[color=lightgray] (7,0) rectangle (8,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$5$};
+\node at (3.5,0.5) {$6$};
+\node at (4.5,0.5) {$7$};
+\node at (5.5,0.5) {$9$};
+\node at (6.5,0.5) {$9$};
+\node at (7.5,0.5) {$10$};
+
+\draw[thick,->] (0.5,-0.7) -- (0.5,-0.1);
+\draw[thick,->] (7.5,-0.7) -- (7.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+随后左指针向右移动一步，右指针向左移动三步，总和变为 $4+7=11$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (1,0) rectangle (2,1);
+\fill[color=lightgray] (4,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$5$};
+\node at (3.5,0.5) {$6$};
+\node at (4.5,0.5) {$7$};
+\node at (5.5,0.5) {$9$};
+\node at (6.5,0.5) {$9$};
+\node at (7.5,0.5) {$10$};
+
+\draw[thick,->] (1.5,-0.7) -- (1.5,-0.1);
+\draw[thick,->] (4.5,-0.7) -- (4.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+之后左指针再次向右移动一步，右指针不动，于是找到解 $5+7=12$。
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (3,1);
+\fill[color=lightgray] (4,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$4$};
+\node at (2.5,0.5) {$5$};
+\node at (3.5,0.5) {$6$};
+\node at (4.5,0.5) {$7$};
+\node at (5.5,0.5) {$9$};
+\node at (6.5,0.5) {$9$};
+\node at (7.5,0.5) {$10$};
+
+\draw[thick,->] (2.5,-0.7) -- (2.5,-0.1);
+\draw[thick,->] (4.5,-0.7) -- (4.5,-0.1);
+\end{tikzpicture}
+\end{center}
+
+算法的时间复杂度为 $O(n\log n)$，因为先在 $O(n\log n)$ 时间内排序数组，随后两个指针各移动 $O(n)$ 步。
+
+还可以使用二分查找，以另一种方式在 $O(n\log n)$ 时间内解决问题：遍历数组，对每个元素尝试找到另一个能使总和为 $x$ 的元素。共执行 $n$ 次二分查找，每次耗时 $O(\log n)$。
+
+\index{3SUM problem}
+更困难的问题是\key{三数之和问题}（3SUM），要求找出\emph{三个}和为 $x$ 的数组元素。借鉴上述算法的思想，可以在 $O(n^2)$ 时间内解决该问题\footnote{很长一段时间里，人们认为不可能以优于 $O(n^2)$ 的时间复杂度解决 3SUM 问题。然而，2014 年的研究表明事实并非如此 \cite{gro14}。}。你能看出该怎么做吗？
+
+\section{最近更小元素}
+
+\index{nearest smaller elements}
+
+摊还分析常用于估算数据结构上的操作次数。这些操作的分布可能不均匀，大多数操作集中发生在算法的某个阶段，但操作总数仍然受限。
+
+例如，考虑为每个数组元素寻找\key{最近更小元素}的问题，即在该元素之前出现、离它最近且比它小的元素。这样的元素可能不存在，此时算法应予以报告。下面介绍如何使用栈高效解决该问题。
+
+从左到右遍历数组，并维护一个存放数组元素的栈。在每个位置，不断弹出栈中元素，直到栈顶元素小于当前元素或栈为空。此时若栈非空，栈顶就是当前元素的最近更小元素；若栈为空，则不存在这样的元素。最后将当前元素压入栈中。
+
+例如，考虑下列数组：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+\end{tikzpicture}
+\end{center}
+
+首先将元素 1、3 和 4 压入栈中，因为每个元素都大于前一个元素。因此，4 的最近更小元素是 3，3 的最近更小元素是 1。
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (3,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\draw (0.2,0.2-1.2) rectangle (0.8,0.8-1.2);
+\draw (1.2,0.2-1.2) rectangle (1.8,0.8-1.2);
+\draw (2.2,0.2-1.2) rectangle (2.8,0.8-1.2);
+
+\node at (0.5,0.5-1.2) {$1$};
+\node at (1.5,0.5-1.2) {$3$};
+\node at (2.5,0.5-1.2) {$4$};
+
+\draw[->,thick] (0.8,0.5-1.2) -- (1.2,0.5-1.2);
+\draw[->,thick] (1.8,0.5-1.2) -- (2.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+下一个元素 2 小于栈顶的两个元素。因此，3 和 4 被弹出栈，再将 2 压入栈中。它的最近更小元素是 1：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (3,0) rectangle (4,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\draw (0.2,0.2-1.2) rectangle (0.8,0.8-1.2);
+\draw (3.2,0.2-1.2) rectangle (3.8,0.8-1.2);
+
+\node at (0.5,0.5-1.2) {$1$};
+\node at (3.5,0.5-1.2) {$2$};
+
+\draw[->,thick] (0.8,0.5-1.2) -- (3.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+随后，元素 5 大于元素 2，因此将其压入栈中，它的最近更小元素是 2：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (4,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\draw (0.2,0.2-1.2) rectangle (0.8,0.8-1.2);
+\draw (3.2,0.2-1.2) rectangle (3.8,0.8-1.2);
+\draw (4.2,0.2-1.2) rectangle (4.8,0.8-1.2);
+
+\node at (0.5,0.5-1.2) {$1$};
+\node at (3.5,0.5-1.2) {$2$};
+\node at (4.5,0.5-1.2) {$5$};
+
+\draw[->,thick] (0.8,0.5-1.2) -- (3.2,0.5-1.2);
+\draw[->,thick] (3.8,0.5-1.2) -- (4.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+之后将元素 5 弹出栈，再将元素 3 和 4 压入栈：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (6,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\draw (0.2,0.2-1.2) rectangle (0.8,0.8-1.2);
+\draw (3.2,0.2-1.2) rectangle (3.8,0.8-1.2);
+\draw (5.2,0.2-1.2) rectangle (5.8,0.8-1.2);
+\draw (6.2,0.2-1.2) rectangle (6.8,0.8-1.2);
+
+\node at (0.5,0.5-1.2) {$1$};
+\node at (3.5,0.5-1.2) {$2$};
+\node at (5.5,0.5-1.2) {$3$};
+\node at (6.5,0.5-1.2) {$4$};
+
+\draw[->,thick] (0.8,0.5-1.2) -- (3.2,0.5-1.2);
+\draw[->,thick] (3.8,0.5-1.2) -- (5.2,0.5-1.2);
+\draw[->,thick] (5.8,0.5-1.2) -- (6.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+最后，除 1 外的所有元素都被弹出栈，并将末尾元素 2 压入栈中：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (7,0) rectangle (8,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$1$};
+\node at (1.5,0.5) {$3$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$2$};
+\node at (4.5,0.5) {$5$};
+\node at (5.5,0.5) {$3$};
+\node at (6.5,0.5) {$4$};
+\node at (7.5,0.5) {$2$};
+
+\draw (0.2,0.2-1.2) rectangle (0.8,0.8-1.2);
+\draw (7.2,0.2-1.2) rectangle (7.8,0.8-1.2);
+
+\node at (0.5,0.5-1.2) {$1$};
+\node at (7.5,0.5-1.2) {$2$};
+
+\draw[->,thick] (0.8,0.5-1.2) -- (7.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+算法效率取决于栈操作总数。若当前元素大于栈顶元素，可直接压栈，十分高效。有时栈中会有多个较大元素，弹出它们需要一定时间。但每个元素都\emph{恰好入栈一次}，并且\emph{至多出栈一次}。因此，每个元素引起 $O(1)$ 次栈操作，算法的时间复杂度为 $O(n)$。
+
+\section{滑动窗口最小值}
+
+\index{sliding window}
+\index{sliding window minimum}
+
+\key{滑动窗口}是一个大小固定、在数组中从左向右移动的子数组。在窗口的每个位置，都要计算窗口内元素的某些信息。本节重点讨论维护\key{滑动窗口最小值}，即报告每个窗口中的最小值。
+
+计算滑动窗口最小值的思想与计算最近更小元素类似。维护一个元素严格递增的队列，队首始终对应窗口内的最小元素。每次窗口移动后，从队尾不断删除元素，直到队尾元素小于新进入窗口的元素或队列为空。如果队首元素已经不在窗口内，也将其删除。最后把新元素加入队尾。
+
+例如，考虑下列数组：
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+\end{tikzpicture}
+\end{center}
+
+设滑动窗口大小为 4。在窗口的第一个位置，最小值为 1：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (0,0) rectangle (4,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+
+\draw (1.2,0.2-1.2) rectangle (1.8,0.8-1.2);
+\draw (2.2,0.2-1.2) rectangle (2.8,0.8-1.2);
+\draw (3.2,0.2-1.2) rectangle (3.8,0.8-1.2);
+
+\node at (1.5,0.5-1.2) {$1$};
+\node at (2.5,0.5-1.2) {$4$};
+\node at (3.5,0.5-1.2) {$5$};
+
+\draw[->,thick] (1.8,0.5-1.2) -- (2.2,0.5-1.2);
+\draw[->,thick] (2.8,0.5-1.2) -- (3.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+随后窗口向右移动一步。新元素 3 小于队列中的 4 和 5，因此将 4 和 5 从队列中删除，再将 3 加入队列。最小值仍为 1。
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (1,0) rectangle (5,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+
+\draw (1.2,0.2-1.2) rectangle (1.8,0.8-1.2);
+\draw (4.2,0.2-1.2) rectangle (4.8,0.8-1.2);
+
+\node at (1.5,0.5-1.2) {$1$};
+\node at (4.5,0.5-1.2) {$3$};
+
+\draw[->,thick] (1.8,0.5-1.2) -- (4.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+接着窗口再次移动，最小元素 1 已不在窗口中，因此将其从队列删除，此时最小值为 3；同时把新元素 4 加入队列。
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (2,0) rectangle (6,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+
+\draw (4.2,0.2-1.2) rectangle (4.8,0.8-1.2);
+\draw (5.2,0.2-1.2) rectangle (5.8,0.8-1.2);
+
+\node at (4.5,0.5-1.2) {$3$};
+\node at (5.5,0.5-1.2) {$4$};
+
+\draw[->,thick] (4.8,0.5-1.2) -- (5.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+下一个新元素 1 小于队列中的所有元素。因此删除队列中的全部元素，队列中只留下元素 1：
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (3,0) rectangle (7,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+
+\draw (6.2,0.2-1.2) rectangle (6.8,0.8-1.2);
+
+\node at (6.5,0.5-1.2) {$1$};
+\end{tikzpicture}
+\end{center}
+
+最后窗口到达末尾位置。将元素 2 加入队列，但窗口内的最小值仍为 1。
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+\fill[color=lightgray] (4,0) rectangle (8,1);
+\draw (0,0) grid (8,1);
+
+\node at (0.5,0.5) {$2$};
+\node at (1.5,0.5) {$1$};
+\node at (2.5,0.5) {$4$};
+\node at (3.5,0.5) {$5$};
+\node at (4.5,0.5) {$3$};
+\node at (5.5,0.5) {$4$};
+\node at (6.5,0.5) {$1$};
+\node at (7.5,0.5) {$2$};
+
+\draw (6.2,0.2-1.2) rectangle (6.8,0.8-1.2);
+\draw (7.2,0.2-1.2) rectangle (7.8,0.8-1.2);
+
+\node at (6.5,0.5-1.2) {$1$};
+\node at (7.5,0.5-1.2) {$2$};
+
+\draw[->,thick] (6.8,0.5-1.2) -- (7.2,0.5-1.2);
+\end{tikzpicture}
+\end{center}
+
+由于每个数组元素恰好入队一次、至多出队一次，算法的时间复杂度为 $O(n)$。
+
+

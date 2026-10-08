@@ -1,0 +1,507 @@
+\chapter{数据结构}
+
+\index{data structure}
+
+\key{数据结构}是在计算机内存中存储数据的方式。为问题选择合适的数据结构很重要，因为每种数据结构都有各自的优缺点。关键问题是：所选数据结构能够高效支持哪些操作？
+
+本章介绍 C++ 标准库中最重要的数据结构。应尽可能使用标准库，这能节省大量时间。本书后面还会介绍标准库中没有的更复杂数据结构。
+
+\section{动态数组}
+
+\index{dynamic array}
+\index{vector}
+
+\key{动态数组}是在程序运行期间可以改变大小的数组。C++ 中最常用的动态数组是 \texttt{vector}，其用法与普通数组几乎相同。
+
+下面的代码创建一个空向量，并加入三个元素：
+
+\begin{lstlisting}
+vector<int> v;
+v.push_back(3); // [3]
+v.push_back(2); // [3,2]
+v.push_back(5); // [3,2,5]
+\end{lstlisting}
+
+随后可以像普通数组一样访问元素：
+
+\begin{lstlisting}
+cout << v[0] << "\n"; // 3
+cout << v[1] << "\n"; // 2
+cout << v[2] << "\n"; // 5
+\end{lstlisting}
+
+函数 \texttt{size} 返回向量中的元素数量。下面的代码遍历并输出全部元素：
+
+\begin{lstlisting}
+for (int i = 0; i < v.size(); i++) {
+    cout << v[i] << "\n";
+}
+\end{lstlisting}
+
+\begin{samepage}
+更简短的遍历方式如下：
+
+\begin{lstlisting}
+for (auto x : v) {
+    cout << x << "\n";
+}
+\end{lstlisting}
+\end{samepage}
+
+函数 \texttt{back} 返回向量的最后一个元素，函数 \texttt{pop\_back} 删除最后一个元素：
+
+\begin{lstlisting}
+vector<int> v;
+v.push_back(5);
+v.push_back(2);
+cout << v.back() << "\n"; // 2
+v.pop_back();
+cout << v.back() << "\n"; // 5
+\end{lstlisting}
+
+下面的代码创建含五个元素的向量：
+
+\begin{lstlisting}
+vector<int> v = {2,4,2,5,1};
+\end{lstlisting}
+
+另一种创建方式是指定元素数量及每个元素的初始值：
+
+\begin{lstlisting}
+// size 10, initial value 0
+vector<int> v(10);
+\end{lstlisting}
+\begin{lstlisting}
+// size 10, initial value 5
+vector<int> v(10, 5);
+\end{lstlisting}
+
+向量内部使用普通数组实现。当向量扩大而原数组容量不足时，会分配新数组并把全部元素移入其中。不过这种情况并不频繁，因此 \texttt{push\_back} 的平均时间复杂度为 $O(1)$。
+
+\index{string}
+
+\texttt{string} 也是动态数组，用法与向量相近；此外，它还提供其他数据结构没有的字符串专用语法。字符串可以用 \texttt{+} 拼接。函数 $\texttt{substr}(k,x)$ 返回从位置 $k$ 开始、长度为 $x$ 的子串；函数 $\texttt{find}(\texttt{t})$ 查找子串 \texttt{t} 首次出现的位置。
+
+下面展示若干字符串操作：
+
+\begin{lstlisting}
+string a = "hatti";
+string b = a+a;
+cout << b << "\n"; // hattihatti
+b[5] = 'v';
+cout << b << "\n"; // hattivatti
+string c = b.substr(3,4);
+cout << c << "\n"; // tiva
+\end{lstlisting}
+
+\section{集合结构}
+
+\index{set}
+
+\key{集合}是维护一组元素的数据结构，基本操作包括插入、查找和删除。
+
+C++ 标准库提供两种集合实现。\texttt{set} 基于平衡二叉树，操作时间为 $O(\log n)$；\texttt{unordered\_set} 使用哈希，操作平均为 $O(1)$。
+
+选择哪一种实现往往取决于偏好。\texttt{set} 能维护元素顺序，并提供 \texttt{unordered\_set} 没有的函数；另一方面，\texttt{unordered\_set} 可能更高效。
+
+下面的代码创建整数集合并演示若干操作。函数 \texttt{insert} 插入元素，\texttt{count} 返回元素的出现次数，\texttt{erase} 删除元素。
+
+\begin{lstlisting}
+set<int> s;
+s.insert(3);
+s.insert(2);
+s.insert(5);
+cout << s.count(3) << "\n"; // 1
+cout << s.count(4) << "\n"; // 0
+s.erase(3);
+s.insert(4);
+cout << s.count(3) << "\n"; // 0
+cout << s.count(4) << "\n"; // 1
+\end{lstlisting}
+
+集合的多数用法类似向量，但不能用 \texttt{[]} 访问元素。下面的代码创建集合，输出元素数量，再遍历所有元素：
+\begin{lstlisting}
+set<int> s = {2,5,6,8};
+cout << s.size() << "\n"; // 4
+for (auto x : s) {
+    cout << x << "\n";
+}
+\end{lstlisting}
+
+集合的重要性质是所有元素都\emph{互不相同}。因此，\texttt{count} 总是返回 0（元素不在集合中）或 1（元素在集合中）；若元素已存在，\texttt{insert} 不会重复插入。示例如下：
+
+\begin{lstlisting}
+set<int> s;
+s.insert(5);
+s.insert(5);
+s.insert(5);
+cout << s.count(5) << "\n"; // 1
+\end{lstlisting}
+
+C++ 还提供 \texttt{multiset} 和 \texttt{unordered\_multiset}，用法分别类似 \texttt{set} 和 \texttt{unordered\_set}，但允许元素重复。例如，下面的代码向多重集合加入三个 5：
+
+\begin{lstlisting}
+multiset<int> s;
+s.insert(5);
+s.insert(5);
+s.insert(5);
+cout << s.count(5) << "\n"; // 3
+\end{lstlisting}
+函数 \texttt{erase} 会删除多重集合中该元素的所有实例：
+\begin{lstlisting}
+s.erase(5);
+cout << s.count(5) << "\n"; // 0
+\end{lstlisting}
+若只想删除一个实例，可以写成：
+\begin{lstlisting}
+s.erase(s.find(5));
+cout << s.count(5) << "\n"; // 2
+\end{lstlisting}
+
+\section{映射结构}
+
+\index{map}
+
+\key{映射}是由键值对组成的广义数组。普通数组的键总是连续整数 $0,1,\ldots,n-1$，而映射的键可以是任意数据类型，也不必连续。
+
+C++ 标准库提供与集合对应的两种映射实现：\texttt{map} 基于平衡二叉树，访问元素需要 $O(\log n)$ 时间；\texttt{unordered\_map} 使用哈希，访问元素平均需要 $O(1)$ 时间。
+
+下面的代码创建一个以字符串为键、整数为值的映射：
+
+\begin{lstlisting}
+map<string,int> m;
+m["monkey"] = 4;
+m["banana"] = 3;
+m["harpsichord"] = 9;
+cout << m["banana"] << "\n"; // 3
+\end{lstlisting}
+
+若请求一个不存在的键所对应的值，该键会自动以默认值加入映射。例如，下面会加入值为 0 的键 ``aybabtu''。
+
+\begin{lstlisting}
+map<string,int> m;
+cout << m["aybabtu"] << "\n"; // 0
+\end{lstlisting}
+函数 \texttt{count} 检查映射中是否存在某个键：
+\begin{lstlisting}
+if (m.count("aybabtu")) {
+    // key exists
+}
+\end{lstlisting}
+下面的代码输出映射中的所有键和值：
+\begin{lstlisting}
+for (auto x : m) {
+    cout << x.first << " " << x.second << "\n";
+}
+\end{lstlisting}
+
+\section{迭代器与区间}
+
+\index{iterator}
+
+许多 C++ 标准库函数使用迭代器操作。\key{迭代器}是指向数据结构中某个元素的变量。
+
+常用迭代器 \texttt{begin} 和 \texttt{end} 定义包含数据结构全部元素的区间。\texttt{begin} 指向第一个元素，\texttt{end} 指向最后一个元素\emph{之后}的位置。如下所示：
+
+\begin{center}
+\begin{tabular}{llllllllll}
+\{ & 3, & 4, & 6, & 8, & 12, & 13, & 14, & 17 & \} \\
+& $\uparrow$ & & & & & & & & $\uparrow$ \\
+& \multicolumn{3}{l}{\texttt{s.begin()}} & & & & & & \texttt{s.end()} \\
+\end{tabular}
+\end{center}
+
+注意二者的不对称性：\texttt{s.begin()} 指向数据结构中的元素，而 \texttt{s.end()} 指向结构之外。因此，迭代器定义的是\emph{左闭右开}区间。
+
+\subsubsection{使用区间}
+
+迭代器用于向 C++ 标准库函数提供数据结构中的元素区间。通常需要处理全部元素，因此把 \texttt{begin} 和 \texttt{end} 传给函数。
+
+例如，下面的代码先用 \texttt{sort} 排序向量，再用 \texttt{reverse} 反转元素顺序，最后用 \texttt{random\_shuffle} 随机打乱元素：
+
+\index{sort@\texttt{sort}}
+\index{reverse@\texttt{reverse}}
+\index{random\_shuffle@\texttt{random\_shuffle}}
+
+\begin{lstlisting}
+sort(v.begin(), v.end());
+reverse(v.begin(), v.end());
+random_shuffle(v.begin(), v.end());
+\end{lstlisting}
+
+这些函数也可用于普通数组，此时传入数组指针而非迭代器：
+
+\newpage
+\begin{lstlisting}
+sort(a, a+n);
+reverse(a, a+n);
+random_shuffle(a, a+n);
+\end{lstlisting}
+
+\subsubsection{集合迭代器}
+
+迭代器常用于访问集合元素。下面创建指向集合最小元素的迭代器 \texttt{it}：
+\begin{lstlisting}
+set<int>::iterator it = s.begin();
+\end{lstlisting}
+更简短的写法是：
+\begin{lstlisting}
+auto it = s.begin();
+\end{lstlisting}
+使用 \texttt{*} 可访问迭代器所指元素。例如，下面输出集合第一个元素：
+
+\begin{lstlisting}
+auto it = s.begin();
+cout << *it << "\n";
+\end{lstlisting}
+
+可以用运算符 \texttt{++}（向前）和 \texttt{--}（向后）移动迭代器，即移至集合中的下一个或上一个元素。
+
+下面按递增顺序输出所有元素：
+\begin{lstlisting}
+for (auto it = s.begin(); it != s.end(); it++) {
+    cout << *it << "\n";
+}
+\end{lstlisting}
+下面输出集合中的最大元素：
+\begin{lstlisting}
+auto it = s.end(); it--;
+cout << *it << "\n";
+\end{lstlisting}
+
+函数 $\texttt{find}(x)$ 返回指向值为 $x$ 的元素的迭代器。若集合不包含 $x$，则返回 \texttt{end}。
+
+\begin{lstlisting}
+auto it = s.find(x);
+if (it == s.end()) {
+    // x is not found
+}
+\end{lstlisting}
+
+函数 $\texttt{lower\_bound}(x)$ 返回指向集合中最小的、值\emph{不小于} $x$ 的元素的迭代器；$\texttt{upper\_bound}(x)$ 返回指向最小的、值\emph{大于} $x$ 的元素的迭代器。若不存在这样的元素，两者都返回 \texttt{end}。不维护元素顺序的 \texttt{unordered\_set} 不支持这些函数。
+
+\begin{samepage}
+例如，下面的代码寻找最接近 $x$ 的元素：
+
+\begin{lstlisting}
+auto it = s.lower_bound(x);
+if (it == s.begin()) {
+    cout << *it << "\n";
+} else if (it == s.end()) {
+    it--;
+    cout << *it << "\n";
+} else {
+    int a = *it; it--;
+    int b = *it;
+    if (x-b < a-x) cout << b << "\n";
+    else cout << a << "\n";
+}
+\end{lstlisting}
+
+代码假设集合非空，并用迭代器 \texttt{it} 处理所有情况。首先令迭代器指向最小的不小于 $x$ 的元素。若 \texttt{it} 等于 \texttt{begin}，对应元素最接近 $x$；若等于 \texttt{end}，则集合最大元素最接近 $x$；否则，答案是 \texttt{it} 所指元素或其前一个元素。
+\end{samepage}
+
+\section{其他结构}
+
+\subsubsection{位集}
+
+\index{bitset}
+
+\key{位集}是每个元素只能为 0 或 1 的数组。例如，下面创建一个含 10 个元素的位集：
+\begin{lstlisting}
+bitset<10> s;
+s[1] = 1;
+s[3] = 1;
+s[4] = 1;
+s[7] = 1;
+cout << s[4] << "\n"; // 1
+cout << s[5] << "\n"; // 0
+\end{lstlisting}
+
+位集比普通数组更节省内存，因为每个元素只占一位。例如，用 \texttt{int} 数组存储 $n$ 个二进制值需要 $32n$ 位，而位集只需 $n$ 位。此外，位运算可以高效地批量操作位集元素，从而优化算法。
+
+下面展示创建上述位集的另一种方式：
+\begin{lstlisting}
+bitset<10> s(string("0010011010")); // from right to left
+cout << s[4] << "\n"; // 1
+cout << s[5] << "\n"; // 0
+\end{lstlisting}
+
+函数 \texttt{count} 返回位集中 1 的数量：
+
+\begin{lstlisting}
+bitset<10> s(string("0010011010"));
+cout << s.count() << "\n"; // 4
+\end{lstlisting}
+
+下面是位运算示例：
+\begin{lstlisting}
+bitset<10> a(string("0010110110"));
+bitset<10> b(string("1011011000"));
+cout << (a&b) << "\n"; // 0010010000
+cout << (a|b) << "\n"; // 1011111110
+cout << (a^b) << "\n"; // 1001101110
+\end{lstlisting}
+
+\subsubsection{双端队列}
+
+\index{deque}
+
+\key{双端队列}是一种可在两端高效改变大小的动态数组。与向量一样，它提供 \texttt{push\_back} 和 \texttt{pop\_back}，同时还提供向量没有的 \texttt{push\_front} 和 \texttt{pop\_front}。
+
+双端队列用法如下：
+\begin{lstlisting}
+deque<int> d;
+d.push_back(5); // [5]
+d.push_back(2); // [5,2]
+d.push_front(3); // [3,5,2]
+d.pop_back(); // [3,5]
+d.pop_front(); // [5]
+\end{lstlisting}
+
+双端队列的内部实现比向量复杂，因此速度较慢。不过，在两端添加和删除元素的平均时间仍为 $O(1)$。
+
+\subsubsection{栈}
+
+\index{stack}
+
+\key{栈}支持两种 $O(1)$ 操作：向栈顶添加元素，以及从栈顶删除元素。只能访问栈顶元素。
+
+栈的用法如下：
+\begin{lstlisting}
+stack<int> s;
+s.push(3);
+s.push(2);
+s.push(5);
+cout << s.top(); // 5
+s.pop();
+cout << s.top(); // 2
+\end{lstlisting}
+\subsubsection{队列}
+
+\index{queue}
+
+\key{队列}也支持两种 $O(1)$ 操作：向队尾添加元素，以及删除队首元素。只能访问队首和队尾元素。
+
+队列的用法如下：
+\begin{lstlisting}
+queue<int> q;
+q.push(3);
+q.push(2);
+q.push(5);
+cout << q.front(); // 3
+q.pop();
+cout << q.front(); // 2
+\end{lstlisting}
+
+\subsubsection{优先队列}
+
+\index{priority queue}
+\index{heap}
+
+\key{优先队列}维护一组元素。它支持插入，并根据队列类型查询和删除最小或最大元素。插入和删除需要 $O(\log n)$ 时间，查询需要 $O(1)$ 时间。
+
+有序集合也能高效支持优先队列的全部操作，但优先队列的常数因子更小。优先队列通常用堆实现，其结构比有序集合所用的平衡二叉树简单得多。
+
+\begin{samepage}
+C++ 优先队列默认按递减顺序排列，可以查询并删除最大元素。示例如下：
+
+\begin{lstlisting}
+priority_queue<int> q;
+q.push(3);
+q.push(5);
+q.push(7);
+q.push(2);
+cout << q.top() << "\n"; // 7
+q.pop();
+cout << q.top() << "\n"; // 5
+q.pop();
+q.push(6);
+cout << q.top() << "\n"; // 6
+q.pop();
+\end{lstlisting}
+\end{samepage}
+
+若要创建支持查询和删除最小元素的优先队列，可以写成：
+
+\begin{lstlisting}
+priority_queue<int,vector<int>,greater<int>> q;
+\end{lstlisting}
+
+\subsubsection{策略型数据结构}
+
+\texttt{g++} 编译器还支持一些不属于 C++ 标准库的\emph{策略型}数据结构。使用它们时，需在代码中加入：
+\begin{lstlisting}
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds; 
+\end{lstlisting}
+随后可以定义 \texttt{indexed\_set}：它类似 \texttt{set}，但能像数组一样按秩访问。整数版本定义如下：
+\begin{lstlisting}
+typedef tree<int,null_type,less<int>,rb_tree_tag,
+             tree_order_statistics_node_update> indexed_set; 
+\end{lstlisting}
+现在可以按如下方式创建集合：
+\begin{lstlisting}
+indexed_set s;
+s.insert(2);
+s.insert(3);
+s.insert(7);
+s.insert(9);
+\end{lstlisting}
+该集合的特点是可以访问元素在有序数组中对应的下标。函数 $\texttt{find\_by\_order}$ 返回指向指定位置元素的迭代器：
+\begin{lstlisting}
+auto x = s.find_by_order(2);
+cout << *x << "\n"; // 7
+\end{lstlisting}
+函数 $\texttt{order\_of\_key}$ 返回指定元素的位置：
+\begin{lstlisting}
+cout << s.order_of_key(7) << "\n"; // 2
+\end{lstlisting}
+若元素不在集合中，则返回它若被插入后应处的位置：
+\begin{lstlisting}
+cout << s.order_of_key(6) << "\n"; // 2
+cout << s.order_of_key(8) << "\n"; // 3
+\end{lstlisting}
+两个函数都在对数时间内运行。
+
+\section{与排序的比较}
+
+一个问题往往既可用数据结构解决，也可用排序解决。两种方法的渐进复杂度可能掩盖实际效率上的显著差异。
+
+考虑如下问题：给定两个均含 $n$ 个元素的列表 $A$、$B$，计算同时属于两者的元素数量。例如，
+\[A = [5,2,8,9] \hspace{10pt} \textrm{且} \hspace{10pt} B = [3,2,9,5],\]
+答案为 3，因为 2、5、9 同时属于两个列表。
+
+直接做法是以 $O(n^2)$ 时间遍历所有元素对，下面讨论更高效的算法。
+
+\subsubsection{算法一}
+
+把 $A$ 中元素存入集合，再遍历 $B$，逐个检查元素是否也属于 $A$。由于 $A$ 的元素保存在集合中，检查很高效。使用 \texttt{set} 时，算法复杂度为 $O(n \log n)$。
+
+\subsubsection{算法二}
+
+这里无须维护有序集合，因此可用 \texttt{unordered\_set} 代替 \texttt{set}。只需更换底层数据结构，就能轻松提高效率，新算法的时间复杂度为 $O(n)$。
+
+\subsubsection{算法三}
+
+也可以不用数据结构而采用排序。先分别排序 $A$、$B$，再同时遍历两个列表找出公共元素。排序需要 $O(n \log n)$ 时间，其余部分为 $O(n)$，总复杂度为 $O(n \log n)$。
+
+\subsubsection{效率比较}
+
+下表展示当 $n$ 变化、列表元素为 $1 \ldots 10^9$ 之间的随机整数时，上述算法的效率：
+
+\begin{center}
+\begin{tabular}{rrrr}
+$n$ & 算法一 & 算法二 & 算法三 \\
+\hline
+$10^6$ & $1.5$ s & $0.3$ s & $0.2$ s \\
+$2 \cdot 10^6$ & $3.7$ s & $0.8$ s & $0.3$ s \\
+$3 \cdot 10^6$ & $5.7$ s & $1.3$ s & $0.5$ s \\
+$4 \cdot 10^6$ & $7.7$ s & $1.7$ s & $0.7$ s \\
+$5 \cdot 10^6$ & $10.0$ s & $2.3$ s & $0.9$ s \\
+\end{tabular}
+\end{center}
+
+算法一和算法二除使用不同集合结构外完全相同。在本问题中，这一选择对运行时间影响很大：算法二比算法一快 4--5 倍。
+
+不过，效率最高的是使用排序的算法三，其耗时仅为算法二的一半。有趣的是，算法一与算法三的复杂度同为 $O(n \log n)$，但算法三却快十倍。这是因为排序过程简单，且只在算法三开始时执行一次，其余部分在线性时间内运行；算法一则在整个执行过程中都要维护复杂的平衡二叉树。
